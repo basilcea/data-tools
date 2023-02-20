@@ -1,0 +1,205 @@
+{
+  "name": "KenyaEnrollmentStreamed",
+  "nodes": [
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "number": [
+            {
+              "name": "ID",
+              "value": "={{ $json[\"_id\"] }}"
+            },
+            {
+              "name": "Farmer_Phone_number",
+              "value": "={{ $json[\"Farmer_Phone_Number\"] }}"
+            },
+            {
+              "name": "Year",
+              "value": 2023
+            }
+          ],
+          "string": [
+            {
+              "name": "Start_time",
+              "value": "={{ $json[\"start\"] }}"
+            },
+            {
+              "name": "End_time",
+              "value": "={{ $json[\"end\"] }}"
+            },
+            {
+              "name": "SUBMISSION_TIME",
+              "value": "={{ $json[\"_submission_time\"] }}"
+            },
+            {
+              "name": "SUBMITTED_BY",
+              "value": "={{ $json[\"_submitted_by\"] }}"
+            },
+            {
+              "name": "Farmer_Id",
+              "value": "={{ $json[\"Farmer_ID_Number\"] }}"
+            },
+            {
+              "name": "Region",
+              "value": "={{ $json[\"Region\"] }}"
+            },
+            {
+              "name": "Nursery",
+              "value": "={{ $json[\"Nursery\"] }}"
+            },
+            {
+              "name": "Username",
+              "value": "={{ $json[\"Username\"] }}"
+            },
+            {
+              "name": "Farmer_Name",
+              "value": "={{ $json[\"Farmer_Name\"] }}"
+            },
+            {
+              "name": "Tupande_Farmer",
+              "value": "={{ $json[\"Tupande_Farmer\"] }}"
+            },
+            {
+              "name": "Duka",
+              "value": "={{ $json[\"Duka\"] }}"
+            },
+            {
+              "name": "Submission_ID",
+              "value": "={{ $json[\"_uuid\"] }}"
+            },
+            {
+              "name": "Site",
+              "value": "={{ $json[\"Site\"] }}"
+            },
+            {
+              "name": "Farmer_National_ID",
+              "value": "={{ $json[\"Farmer_s_National_ID_Number\"] }}"
+            },
+            {
+              "name": "Season",
+              "value": "'Long Rain'"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c1b7040e-a970-4c0a-b9bf-8d4be72b6491",
+      "name": "Set",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        800,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "table": "LANDING.KOBO.KENYA_FARMERS_ENROLLMENT_LR23",
+        "columns": "=ID,Farmer_Phone_number,Year,Start_time,End_time,SUBMISSION_TIME,SUBMITTED_BY,Farmer_Id,Region,Nursery,Username,Farmer_Name,Tupande_Farmer,Duka,Submission_ID,Site,Farmer_National_ID,Season\n"
+      },
+      "id": "027437ff-b94e-40cd-8797-c9021f85fe51",
+      "name": "Snowflake6",
+      "type": "n8n-nodes-base.snowflake",
+      "typeVersion": 1,
+      "position": [
+        1020,
+        -200
+      ],
+      "credentials": {
+        "snowflake": {
+          "id": "40",
+          "name": "Snowflake account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "setValidation",
+        "formId": "a3rxwvGkixbhTmPmvmQSDc",
+        "submissionId": "={{ $json[\"ID\"] || 0}}",
+        "validationStatus": "validation_status_approved"
+      },
+      "id": "d51b714f-2bad-43d2-8c87-c01ec743237c",
+      "name": "KoBoToolbox1",
+      "type": "n8n-nodes-base.koBoToolbox",
+      "typeVersion": 1,
+      "position": [
+        1220,
+        -200
+      ],
+      "retryOnFail": true,
+      "credentials": {
+        "koBoToolboxApi": {
+          "id": "39",
+          "name": "KoBoToolbox Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formId": "a3rxwvGkixbhTmPmvmQSDc",
+        "formatOptions": {}
+      },
+      "id": "a339f6fa-6604-4561-a5a4-e3c40c533d35",
+      "name": "KoBoToolbox Trigger",
+      "type": "n8n-nodes-base.koBoToolboxTrigger",
+      "typeVersion": 1,
+      "position": [
+        200,
+        -200
+      ],
+      "webhookId": "abbce322-226d-47b2-aafb-b29de9cd8301",
+      "credentials": {
+        "koBoToolboxApi": {
+          "id": "39",
+          "name": "KoBoToolbox Token account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Set": {
+      "main": [
+        [
+          {
+            "node": "Snowflake6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Snowflake6": {
+      "main": [
+        [
+          {
+            "node": "KoBoToolbox1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "KoBoToolbox Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "0b8f352c-dd35-4f11-9b88-5580284119cd",
+  "id": "100",
+  "meta": {
+    "instanceId": "8129230d7b5838e2bdcc7901d37f050294755dc86702bf89cf084f6e0c51ec3a"
+  },
+  "tags": []
+}

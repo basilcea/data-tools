@@ -1,0 +1,270 @@
+{
+  "name": "KenyaEnrollment",
+  "nodes": [
+    {
+      "parameters": {
+        "formId": "a3rxwvGkixbhTmPmvmQSDc",
+        "limit": "={{ 3000 }}",
+        "filterType": "json",
+        "filterJson": "={\"_validation_status.\":{}, \n\"_id\": {\"$gt\": {{ $json[\"ID\"] || 2830298}} },\n\"_submission_time\": {\"$gt\": \"{{$json[\"expiryDate\"]}}\"}}",
+        "options": {
+          "fields": "_id,  _uuid, start, end, Date,_submission_time, Farmer_Name, Farmer_Phone_Number, Farmer_ID_Number, Farmer_s_National_ID_Number, Tupande_Farmer, Region, Site, Nursery,Username, Other Site, _submitted_by, _validation_status",
+          "sort": "{\"_id\": 1}"
+        }
+      },
+      "id": "73f43bd2-8fc9-48d0-a978-05e6cee80d5c",
+      "name": "KoBoToolbox",
+      "type": "n8n-nodes-base.koBoToolbox",
+      "typeVersion": 1,
+      "position": [
+        340,
+        -200
+      ],
+      "credentials": {
+        "koBoToolboxApi": {
+          "id": "39",
+          "name": "KoBoToolbox Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "number": [
+            {
+              "name": "ID",
+              "value": "={{ $json[\"_id\"] }}"
+            },
+            {
+              "name": "Farmer_Phone_number",
+              "value": "={{ $json[\"Farmer_Phone_Number\"] }}"
+            },
+            {
+              "name": "Year",
+              "value": 2023
+            }
+          ],
+          "string": [
+            {
+              "name": "Start_time",
+              "value": "={{ $json[\"start\"] }}"
+            },
+            {
+              "name": "End_time",
+              "value": "={{ $json[\"end\"] }}"
+            },
+            {
+              "name": "SUBMISSION_TIME",
+              "value": "={{ $json[\"_submission_time\"] }}"
+            },
+            {
+              "name": "SUBMITTED_BY",
+              "value": "={{ $json[\"_submitted_by\"] }}"
+            },
+            {
+              "name": "Farmer_Id",
+              "value": "={{ $json[\"Farmer_ID_Number\"] }}"
+            },
+            {
+              "name": "Region",
+              "value": "={{ $json[\"Region\"] }}"
+            },
+            {
+              "name": "Nursery",
+              "value": "={{ $json[\"Nursery\"] }}"
+            },
+            {
+              "name": "Username",
+              "value": "={{ $json[\"Username\"] }}"
+            },
+            {
+              "name": "Farmer_Name",
+              "value": "={{ $json[\"Farmer_Name\"] }}"
+            },
+            {
+              "name": "Tupande_Farmer",
+              "value": "={{ $json[\"Tupande_Farmer\"] }}"
+            },
+            {
+              "name": "Duka",
+              "value": "={{ $json[\"Duka\"] }}"
+            },
+            {
+              "name": "Submission_ID",
+              "value": "={{ $json[\"_uuid\"] }}"
+            },
+            {
+              "name": "Site",
+              "value": "={{ $json[\"Site\"] }}"
+            },
+            {
+              "name": "Farmer_National_ID",
+              "value": "={{ $json[\"Farmer_s_National_ID_Number\"] }}"
+            },
+            {
+              "name": "Season",
+              "value": "'Long Rain'"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fd82312b-4c48-42b3-808e-a939413b7633",
+      "name": "Set",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        800,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "table": "LANDING.KOBO.KENYA_FARMERS_ENROLLMENT_LR23",
+        "columns": "=ID,Farmer_Phone_number,Year,Start_time,End_time,SUBMISSION_TIME,SUBMITTED_BY,Farmer_Id,Region,Nursery,Username,Farmer_Name,Tupande_Farmer,Duka,Submission_ID,Site,Farmer_National_ID,Season\n"
+      },
+      "id": "0d06ebf2-b211-4f8b-866e-14c997f84efe",
+      "name": "Snowflake6",
+      "type": "n8n-nodes-base.snowflake",
+      "typeVersion": 1,
+      "position": [
+        1020,
+        -200
+      ],
+      "credentials": {
+        "snowflake": {
+          "id": "40",
+          "name": "Snowflake account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "daysInterval": 7
+            }
+          ]
+        }
+      },
+      "id": "3f1ae12d-5811-4936-9ec2-fd87f2c3b2d3",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "action": "calculate",
+        "value": "={{ $json.timestamp || new Date() }}",
+        "operation": "subtract",
+        "duration": 39,
+        "dataPropertyName": "expiryDate",
+        "options": {}
+      },
+      "id": "d8717075-5fff-409e-ac38-982ec100a419",
+      "name": "Date & Time",
+      "type": "n8n-nodes-base.dateTime",
+      "typeVersion": 1,
+      "position": [
+        -120,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field\n// called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.last().json;"
+      },
+      "id": "78a49811-31de-4d0b-b52d-234730e98080",
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        120,
+        -200
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "KoBoToolbox": {
+      "main": [
+        [
+          {
+            "node": "Set",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set": {
+      "main": [
+        [
+          {
+            "node": "Snowflake6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Snowflake6": {
+      "main": [
+        [
+          {
+            "node": "Date & Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Date & Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Date & Time": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "KoBoToolbox",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "47ee61d5-443f-4fe7-8245-51da8988c3df",
+  "id": "99",
+  "meta": {
+    "instanceId": "8129230d7b5838e2bdcc7901d37f050294755dc86702bf89cf084f6e0c51ec3a"
+  },
+  "tags": []
+}
