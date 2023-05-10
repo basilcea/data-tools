@@ -1,0 +1,241 @@
+{
+  "name": "SnowflakeNotification",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM table(information_schema.task_history(SCHEDULED_TIME_RANGE_START => dateadd('minute',-1,current_timestamp()),\nSCHEDULED_TIME_RANGE_END => CURRENT_TIMESTAMP,\nRESULT_LIMIT => 1000,\nERROR_ONLY => TRUE\n))\nWHERE NAME ILIKE '%INCREMENTLOAD%'AND QUERY_ID IS NOT NULL"
+      },
+      "id": "49cef53e-cf40-4c3c-a59d-8376f6e4430d",
+      "name": "Snowflake",
+      "type": "n8n-nodes-base.snowflake",
+      "typeVersion": 1,
+      "position": [
+        400,
+        600
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "snowflake": {
+          "id": "40",
+          "name": "Snowflake account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "\n$json.FULL_SCHEMA = $json.DATABASE_NAME +'.'+$json.SCHEMA_NAME \n$json.TIME_TAKEN = (new Date($json.COMPLETED_TIME).getTime() - new Date($json.QUERY_START_TIME).getTime())/1000 \n$json.ERROR_MESSAGE =  $json.STATE === 'SKIPPED'?'Task Skipped - No Stream Data': $json.ERROR_MESSAGE;\nlet splitted = $json.RETURN_VALUE ? $json.RETURN_VALUE.split(';') : null\nif (splitted && splitted.length === 2){\n  $json.ROWS_UPSERTED = splitted && splitted[0]\n  $json.ROWS_DELETED = splitted && splitted[1]\n}\n\nif (splitted && splitted.length === 3){\n  $json.ROWS_INSERTED = splitted && splitted[0]\n  $json.ROWS_UPDATED = splitted && splitted[1]\n  $json.ROWS_DELETED = splitted && splitted[2]\n}\n\nreturn $input.item;"
+      },
+      "id": "00dfa752-5348-462a-8ec1-d3f6df1761f0",
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        820,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "channel": "bi-etl-alerts",
+        "text": "=",
+        "otherOptions": {
+          "icon_emoji": "❄️",
+          "mrkdwn": true,
+          "unfurl_links": true
+        },
+        "attachments": [
+          {
+            "text": "=Snowflake task details:- {{$json[\"STATE\"] != 'SUCCEEDED' && $json[\"RETURN_VALUE\"] == null ? $json[\"ERROR_MESSAGE\"] :($json[\"RETURN_VALUE\"] == $json[\"ROWS_UPSERTED\"] ?  $json[\"RETURN_VALUE\"]: 'ok')}}",
+            "title_link": "https://app.snowflake.com/west-europe.azure/oaf/#/data/databases/{{ $json[\"DATABASE_NAME\"] }}/schemas/{{ $json[\"SCHEMA_NAME\"] }}/task/{{ $json[\"NAME\"] }}",
+            "color": "={{ $json[\"STATE\"] === \"SUCCEEDED\" || $json[\"STATE\"] === \"SKIPPED\" ? '#50C878' : '#FF0000'}}",
+            "title": "={{ $json[\"DATABASE_NAME\"] }}.{{ $json[\"NAME\"] }}",
+            "fields": {
+              "item": [
+                {
+                  "title": "Query Id",
+                  "value": "={{ $json[\"QUERY_ID\"] }}",
+                  "short": true
+                },
+                {
+                  "title": "State",
+                  "value": "={{ $json[\"STATE\"] }}",
+                  "short": true
+                },
+                {
+                  "title": "Time Started",
+                  "value": "={{ $json[\"QUERY_START_TIME\"] }}",
+                  "short": true
+                },
+                {
+                  "title": "Time Completed",
+                  "value": "={{ $json[\"COMPLETED_TIME\"] }}",
+                  "short": true
+                },
+                {
+                  "title": "Time Taken",
+                  "value": "={{ $json[\"TIME_TAKEN\"] }} seconds",
+                  "short": true
+                },
+                {
+                  "title": "={{ ($json[\"ROWS_UPSERTED\"]!== null && $json[\"RETURN_VALUE\"] !== $json[\"ROWS_UPSERTED\"] && 'Rows Upserted' )}}",
+                  "value": "={{ $json[\"ROWS_UPSERTED\"] !== null && $json[\"RETURN_VALUE\"] != $json[\"ROWS_UPSERTED\"] \n? ($json[\"ROWS_UPSERTED\"] != null ? $json[\"ROWS_UPSERTED\"] : 0): null }}\n",
+                  "short": true
+                },
+                {
+                  "title": "={{ ($json[\"ROWS_INSERTED\"]!== null && $json[\"RETURN_VALUE\"] !== $json[\"ROWS_INSERTED\"] && 'Rows Inserted' )}}",
+                  "value": "={{ $json[\"RETURN_VALUE\"] != $json[\"ROWS_INSERTED\"] \n? ($json[\"ROWS_INSERTED\"] != null ? $json[\"ROWS_INSERTED\"] : 0): null }}\n",
+                  "short": true
+                },
+                {
+                  "title": "={{ ($json[\"ROWS_INSERTED\"]!== null && $json[\"RETURN_VALUE\"] !== $json[\"ROWS_INSERTED\"] && 'Rows Updated' )}}",
+                  "value": "={{ $json[\"RETURN_VALUE\"] != $json[\"ROWS_INSERTED\"] \n? ($json[\"ROWS_UPDATED\"] != null ? $json[\"ROWS_UPDATED\"] : 0): null }}",
+                  "short": true
+                },
+                {
+                  "title": "={{ ($json[\"RETURN_VALUE\"] !== $json[\"ROWS_UPSERTED\"] || $json[\"RETURN_VALUE\"] !== $json[\"ROWS_INSERTED\"])  && 'Rows Deleted' }}",
+                  "value": "={{ ($json[\"RETURN_VALUE\"] != $json[\"ROWS_UPSERTED\"]  || $json[\"RETURN_VALUE\"] != $json[\"ROWS_INSERTED\"]) \n? ($json[\"ROWS_DELETED\"] != null ? $json[\"ROWS_DELETED\"] : 0): null }}",
+                  "short": true
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "id": "c1b20a41-8f76-4145-8a61-371284e1adf0",
+      "name": "Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [
+        1080,
+        580
+      ],
+      "credentials": {
+        "slackApi": {
+          "id": "41",
+          "name": "Slack account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "* * *  *  *"
+            }
+          ]
+        }
+      },
+      "id": "283b33c0-2fdd-4ea8-a2d5-23a6b6b27fc9",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        180,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": true,
+              "value2": "={{Object.keys($json).length !== 0}}"
+            }
+          ]
+        }
+      },
+      "id": "f941437f-f684-4f41-8b9c-7bebfe1a1138",
+      "name": "IF",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        580,
+        600
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "17f7e1ed-deb0-4c7e-9204-242b317aa029",
+      "name": "No Operation, do nothing",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        780,
+        780
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Snowflake": {
+      "main": [
+        [
+          {
+            "node": "IF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Snowflake",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "saveExecutionProgress": "DEFAULT",
+    "saveManualExecutions": false,
+    "callerPolicy": "any",
+    "errorWorkflow": "88",
+    "timezone": "Africa/Maputo"
+  },
+  "versionId": "2d852cea-e795-4fa5-845b-89ff1d4a4c49",
+  "id": "88",
+  "meta": {
+    "instanceId": "8129230d7b5838e2bdcc7901d37f050294755dc86702bf89cf084f6e0c51ec3a"
+  },
+  "tags": []
+}
