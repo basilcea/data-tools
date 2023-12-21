@@ -5,9 +5,7 @@ trigger:
       - qa
   paths:
     include:
-      - 'airflow/*'
-    exclude:
-      - 'airflow/releases/*'
+      - 'airflow/custom_image/*'
 
 name: airflow
 
@@ -32,6 +30,6 @@ stages:
         command: buildAndPush
         containerRegistry: azurecr-oaf
         repository: airflow
-        dockerfile: '$(Build.SourcesDirectory)/airflow/Dockerfile'
+        dockerfile: '$(Build.SourcesDirectory)/airflow/custom_image/Dockerfile'
         tags: 1.0.0
 

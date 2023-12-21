@@ -81,7 +81,7 @@ steps:
   # Package our values
   - task: CopyFiles@2
     inputs:
-      SourceFolder: "$(Build.SourcesDirectory)/superset/values"
+      SourceFolder: "$(Build.SourcesDirectory)/releases/values"
       targetFolder: "$(build.artifactStagingDirectory)"
 
   # build and push image

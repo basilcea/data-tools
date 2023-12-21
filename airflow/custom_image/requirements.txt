@@ -4,6 +4,7 @@ dbt-sqlserver
 dbt-snowflake
 dbt-postgres
 dbt-dremio
+dbt-spark
 PyGithub
 --extra-index-url https://pypi.cloud.soda.io "soda-sqlserver"
 --extra-index-url https://pypi.cloud.soda.io "soda-postgres"
@@ -11,3 +12,4 @@ PyGithub
 --extra-index-url https://pypi.cloud.soda.io "soda-dbt"
 --extra-index-url https://pypi.cloud.soda.io "soda-dremio"
 
+# might no need to reinstall all the dbt-images again if i am using custom dbt image
