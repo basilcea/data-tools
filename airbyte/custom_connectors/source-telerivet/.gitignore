@@ -1,6 +1,0 @@
-.mypy_cache/
-__pycache__/
-secrets/*
-venv/
-source_telerivet.egg-info/
-!secrets/config.json.example
