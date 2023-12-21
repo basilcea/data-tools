@@ -5,9 +5,9 @@ trigger:
       - qa
   paths:
     include:
-      - 'airbyte/custom_connectors/source-kobotoolbox/*'
+      - 'flink/custom_image/*'
 
-name: airbyte-kobo
+name: flink
 
 stages:
 - stage: Build
@@ -23,12 +23,13 @@ stages:
       displayName: Login to Azure registry
       inputs:
         containerRegistry: azurecr-oaf
-        command: "login"
+        command: 'login'
     - task: Docker@2
       displayName: Build and publish image to Azure Container Registry
       inputs:
         command: buildAndPush
         containerRegistry: azurecr-oaf
-        repository: oneacrefund/airbyte-kobo
-        dockerfile: '$(Build.SourcesDirectory)/airbyte/custom_connectors/source-kobotoolbox/Dockerfile'
-        tags: v1.0.3
+        repository: airflow
+        dockerfile: '$(Build.SourcesDirectory)/flink/custom_image/Dockerfile'
+        tags: 1.0.0
+
