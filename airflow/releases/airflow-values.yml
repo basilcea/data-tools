@@ -1,0 +1,66 @@
+config:
+  core:
+    test_connection: Enabled
+images:
+  airflow:
+    repository: oaftech.azurecr.io/airflow
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "1.0.0"
+webserver:
+  startupProbe:
+    timeoutSeconds: 60
+    failureThreshold: 10
+    periodSeconds: 10
+  defaultUser:
+    enabled: false
+  webserverConfigConfigMapName: webconfigmap
+  env:
+   - name: DISCOVERY_URL
+     value: $(DISCOVERY_URL)
+   - name: CLIENT_ID
+     value: $(CLIENT_ID)
+   - name: CLIENT_SECRET
+     value: $(CLIENT_SECRET)
+webserverSecretKeySecretName: airflow-user-secrets
+fernetKeySecretName: airflow-user-secrets
+postgresql:
+  enabled: $(ENABLE_POSTGRESQL)
+  image:
+    tag: "15"
+  auth:
+    postgresPassword: $(POSTGRES_ADMIN_PASSWORD)
+    username: $(POSTGRES_USER)
+    password: $(POSTGRES_PASSWORD)
+data:
+  metadataSecretName: airflow-user-secrets
+pgbouncer:
+  enabled: true
+  # The maximum number of connections to PgBouncer
+  maxClientConn: 10
+  # The maximum number of server connections to the metadata database from PgBouncer
+  metadataPoolSize: 10
+  # The maximum number of server connections to the result backend database from PgBouncer
+  resultBackendPoolSize: 5
+executor: LocalKubernetesExecutor
+scheduler:
+  startupProbe:
+    timeoutSeconds: 120
+    failureThreshold: 20
+    periodSeconds: 10
+dags:
+  gitSync:
+    enabled: true
+    repo: $(DAGS_REPO)
+    branch: $(AIRFLOW_BRANCH_NAME)
+    subPath: ''
+    wait: 60
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+    credentialsSecret: airflow-user-secrets
+    knownHosts: $(KNOWN_HOSTS)
+elasticsearch:
+  enabled: false
+  secretName: airflow-user-secrets

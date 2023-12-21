@@ -1,0 +1,13 @@
+global:
+  # postgres fails with a permission error when using `oaf-shared`.
+  # It tries to run chown on the data directory and fails.
+  # Related issue: https://github.com/bitnami/bitnami-docker-postgresql/issues/285
+  storageClass: "oaf-storage"
+  postgresql:
+    auth:
+      username: $(POSTGRES_USER)
+      database: $(POSTGRES_DATABASE)
+      existingSecret: airbyte-secrets
+      secretKeys:
+        adminPasswordKey: "POSTGRES_ADMIN_PASSWORD"
+        userPasswordKey: "DATABASE_PASSWORD"
