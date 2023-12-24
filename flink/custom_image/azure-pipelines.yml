@@ -29,7 +29,8 @@ stages:
       inputs:
         command: buildAndPush
         containerRegistry: azurecr-oaf
-        repository: airflow
+        repository: oneacrefund/flink
         dockerfile: '$(Build.SourcesDirectory)/flink/custom_image/Dockerfile'
-        tags: 1.0.0
+        tags: latest
 
+ 

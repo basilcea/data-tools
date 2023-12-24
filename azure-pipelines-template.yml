@@ -1,1 +1,35 @@
 # This template describes the standard for building and pushing an image into the azure registry in data engineering
+trigger:
+  branches:
+    include:
+      - main
+      - qa
+  paths:
+    include:
+      - 'path/to/folder'
+
+name: <deployment_name>
+
+stages:
+- stage: Build
+  displayName: Build and publish stage
+  jobs:
+  - job: Build
+    displayName: Build job
+    steps:
+    - task: DockerInstaller@0
+      inputs:
+        dockerVersion: '17.09.0-ce'
+    - task: Docker@2
+      displayName: Login to Azure registry
+      inputs:
+        containerRegistry: azurecr-oaf
+        command: "login"
+    - task: Docker@2
+      displayName: Build and publish image to Azure Container Registry
+      inputs:
+        command: buildAndPush
+        containerRegistry: azurecr-oaf
+        repository: oneacrefund/<deployment-name>
+        dockerfile: '$(Build.SourcesDirectory)/path/to/folder/Dockerfile'
+        tags: v1.0.3
