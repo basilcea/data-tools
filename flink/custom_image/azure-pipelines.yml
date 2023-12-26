@@ -27,6 +27,6 @@ stages:
         containerRegistry: azurecr-oaf
         repository: oneacrefund/flink
         dockerfile: '$(Build.SourcesDirectory)/flink/custom_image/Dockerfile'
-        tags: latest
+        tags: 1.0.0
 
  
