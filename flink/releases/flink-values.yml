@@ -1,0 +1,7 @@
+image:
+  registry: oaftech.azurecr.io
+  repository: oneacrefund/flink
+  tag: 1.0.0
+jobmanager:
+  command: 
+  - jobmanager

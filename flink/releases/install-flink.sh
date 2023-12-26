@@ -11,4 +11,4 @@ helm upgrade \
     --namespace bi \
     --timeout 10m \
     --debug \
-    airflow apache-airflow/airflow
+    oci://registry-1.docker.io/bitnamicharts/flink 
