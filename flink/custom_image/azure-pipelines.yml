@@ -1,8 +1,4 @@
 trigger:
-  branches:
-    include:
-      - main
-      - qa
   paths:
     include:
       - 'flink/custom_image/*'
