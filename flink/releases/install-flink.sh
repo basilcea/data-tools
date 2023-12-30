@@ -7,7 +7,7 @@ helm repo update
 echo "Install flink"
 helm upgrade \
     --install \
-    --values flink-values.yml \
+    --values _one-acre-fund.airflow/releases/flink-values.yml \
     --namespace bi \
     --timeout 10m \
     --debug \
