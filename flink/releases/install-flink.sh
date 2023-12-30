@@ -11,4 +11,4 @@ helm upgrade \
     --namespace bi \
     --timeout 10m \
     --debug \
-    oci://registry-1.docker.io/bitnamicharts/flink 
+    flink oci://registry-1.docker.io/bitnamicharts/flink 
