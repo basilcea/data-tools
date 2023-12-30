@@ -1,0 +1,33 @@
+trigger:
+  paths:
+    include:
+      - 'flink/releases/*'
+
+name: flink
+
+stages:
+- stage: Build
+  displayName: Copy releases files
+  jobs:
+  - job: Build
+    displayName: Build job
+    steps:
+    - task: DockerInstaller@0
+      inputs:
+        dockerVersion: '17.09.0-ce'
+    - task: Docker@2
+      displayName: Login to Azure registry
+      inputs:
+        containerRegistry: azurecr-oaf
+        command: 'login'
+    - task: CopyFiles@2
+      inputs:
+        sourceFolder: 'flink/releases'
+        contents: '**' # '**' means all files and subdirectories
+        targetFolder: '$(Build.ArtifactStagingDirectory)/releases'
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathtoPublish: '$(Build.ArtifactStagingDirectory)/releases'
+        artifactName: 'releases'
+        publishLocation: 'container'
