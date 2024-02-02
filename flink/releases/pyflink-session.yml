@@ -1,0 +1,81 @@
+apiVersion: flink.apache.org/v1beta1
+kind: FlinkDeployment
+metadata:
+  name: pyflink-session
+spec:
+  image: flink:1.0.0
+  flinkVersion: v1_17
+  flinkConfiguration:
+    taskmanager.numberOfTaskSlots: "3"
+  serviceAccount: flink
+  podTemplate:
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: pod-template
+  jobManager:
+    resource:
+      memory: "2048m"
+      cpu: 1
+  taskManager:
+    resource:
+      memory: "2048m"
+      cpu: 1
+
+    
+
+# apiVersion: flink.apache.org/v1beta1
+# kind: FlinkDeployment
+# metadata:
+#   namespace: default
+#   name: pod-template-example
+# spec:
+#   image: flink:1.17
+#   flinkVersion: v1_17
+#   flinkConfiguration:
+#     taskmanager.numberOfTaskSlots: "2"
+#   serviceAccount: flink
+#   podTemplate:
+#     apiVersion: v1
+#     kind: Pod
+#     metadata:
+#       name: pod-template
+#     spec:
+#       containers:
+#         # Do not change the main container name
+#         - name: flink-main-container
+#           volumeMounts:
+#             - mountPath: /opt/flink/log
+#               name: flink-logs
+#         # Sample sidecar container
+#         - name: fluentbit
+#           image: fluent/fluent-bit:1.8.12-debug
+#           command: [ 'sh','-c','/fluent-bit/bin/fluent-bit -i tail -p path=/flink-logs/*.log -p multiline.parser=java -o stdout' ]
+#           volumeMounts:
+#             - mountPath: /flink-logs
+#               name: flink-logs
+#       volumes:
+#         - name: flink-logs
+#           emptyDir: { }
+#   jobManager:
+#     resource:
+#       memory: "2048m"
+#       cpu: 1
+#   taskManager:
+#     resource:
+#       memory: "2048m"
+#       cpu: 1
+#     podTemplate:
+#       apiVersion: v1
+#       kind: Pod
+#       metadata:
+#         name: task-manager-pod-template
+#       spec:
+#         initContainers:
+#           # Sample sidecar container
+#           - name: busybox
+#             image: busybox:1.35.0
+#             command: [ 'sh','-c','echo hello from task manager' ]
+#   job:
+#     jarURI: local:///opt/flink/examples/streaming/StateMachineExample.jar
+#     parallelism: 2
