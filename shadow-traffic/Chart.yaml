@@ -1,0 +1,7 @@
+name: shadowtraffic
+description: A generated Helm Chart from shadowtraffic docker compose
+version: 0.0.1
+apiVersion: v2
+keywords:
+  - shadowtraffic
+

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-config
+data:
+  config.json: |
+    {
+      "globalConfigs": {{ $.Values.globalConfigs | default dict | toJson }},
+      "schedule": {{ $.Values.globalConfigs | default dict | toJson }},
+      "generators": {{ $.Values.generators | default list | toJson }},
+      "connections": {{$.Values.connections | default list | toJson}}
+    }

@@ -1,0 +1,119 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnect
+metadata:
+  name: my-connect-cluster-pool-a
+#  annotations:
+#  # use-connector-resources configures this KafkaConnect
+#  # to use KafkaConnector resources to avoid
+#  # needing to call the Connect REST API directly
+#    strimzi.io/use-connector-resources: "true"
+spec:
+  version: 3.7.0
+  replicas: 1
+  image: docker.io/mrcea/kafka-connectors:latest
+  bootstrapServers: my-cluster-a-kafka-bootstrap:9093
+  tls:
+    trustedCertificates:
+      - secretName: my-cluster-a-cluster-ca-cert
+        certificate: ca.crt
+  config:
+    group.id: connect-cluster-pool-a
+    offset.storage.topic: connect-cluster-pool-a-offsets
+    config.storage.topic: connect-cluster-pool-a-configs
+    status.storage.topic: connect-cluster-pool-a-status
+    # -1 means it will use the default replication factor configured in broker
+    config.storage.replication.factor: -1
+    offset.storage.replication.factor: -1
+    status.storage.replication.factor: -1
+  metricsConfig:
+    type: jmxPrometheusExporter
+    valueFrom:
+      configMapKeyRef:
+        name: connect-metrics
+        key: connect-metrics-config.yml
+
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnect
+metadata:
+  name: my-connect-cluster-pool-b
+  annotations:
+    strimzi.io/use-connector-resources: "true"
+#  annotations:
+#  # use-connector-resources configures this KafkaConnect
+#  # to use KafkaConnector resources to avoid
+#  # needing to call the Connect REST API directly
+#    strimzi.io/use-connector-resources: "true"
+spec:
+  version: 3.7.0
+  replicas: 2
+  bootstrapServers: my-cluster-a-kafka-bootstrap:9093
+  tls:
+    trustedCertificates:
+      - secretName: my-cluster-a-cluster-ca-cert
+        certificate: ca.crt
+  config:
+    group.id: connect-cluster-pool-b
+    offset.flush.timeout.ms: 10000
+    offset.storage.topic: connect-cluster-pool-b-offsets
+    config.storage.topic: connect-cluster-pool-b-configs
+    status.storage.topic: connect-cluster-pool-b-status
+    # -1 means it will use the default replication factor configured in broker
+    config.storage.replication.factor: -1
+    offset.storage.replication.factor: -1
+    status.storage.replication.factor: -1
+
+  build:
+    output: # (2)
+      type: docker
+      image: docker.io/mrcea/kafka-connectors:latest
+      pushSecret: docker-secret
+
+    plugins: # (3)
+      - name: camel-spring-rabbitmq-connector
+        artifacts:
+          - type: tgz
+            # yamllint disable-line rule:line-length
+            url: https://repo1.maven.org/maven2/org/apache/camel/kafkaconnector/camel-spring-rabbitmq-source-kafka-connector/4.4.2/camel-spring-rabbitmq-source-kafka-connector-4.4.2-package.tar.gz
+            # yamllint disable-line rule:line-length
+            # sha512sum: f0b01513363f9b88a30e1e360968980e06324267f589d32282d87c75839a3fb8c4dd01f6177b44f1201ab980dc0feeba8a4fab5ad99ee60920efb2f3cdd97359
+
+      - name: debezium-sqlserver-connector
+        artifacts:
+          - type: tgz
+            # yamllint disable-line rule:line-length
+            url: https://repo1.maven.org/maven2/io/debezium/debezium-connector-sqlserver/2.7.0.Final/debezium-connector-sqlserver-2.7.0.Final-plugin.tar.gz
+            # yamllint disable-line rule:line-length
+            # sha512sum: b86704edc2cd64616c5d6faf91fb616c96f425464d80912505c904ab3faf83077c11dbece65052af46bdb251e85beddd7e985e7ff84be7031c99375cec3360f0
+
+      - name: debezium-jdbc-connector
+        artifacts:
+          - type: tgz
+            # yamllint disable-line rule:line-length
+            url: https://repo1.maven.org/maven2/io/debezium/debezium-connector-jdbc/2.7.0.Final/debezium-connector-jdbc-2.7.0.Final-plugin.tar.gz
+            # yamllint disable-line rule:line-length
+            # sha512sum: ec158cd4e9a169eb95f649a4367ee660ced3865f064dc7a5ca36e88cc5748a2e11a5c4030123832d6b6f08e747d1651f08731f77e36add904bebf9bfe62936c8
+
+      - name: debezium-mongodb-connector
+        artifacts:
+          - type: tgz
+            # yamllint disable-line rule:line-length
+            url: https://repo1.maven.org/maven2/io/debezium/debezium-connector-mongodb/2.7.0.Final/debezium-connector-mongodb-2.7.0.Final-plugin.tar.gz
+            # yamllint disable-line rule:line-length
+            # sha512sum: 51131b64c0d0208bb043fa738a2b9dfeba7ce740e49ce541e9296f470e3cefa41865b9b622a20564c72c46db7860a3f544a18e22a7c9406611ca9eb17ed6de14
+
+      - name: debezium-mysql-connector
+        artifacts:
+          - type: tgz
+            # yamllint disable-line rule:line-length
+            url: https://repo1.maven.org/maven2/io/debezium/debezium-connector-mysql/2.7.0.Final/debezium-connector-mysql-2.7.0.Final-plugin.tar.gz
+            # yamllint disable-line rule:line-length
+            # sha512sum: f5cea47973a2d589785b6b9384f7fe73efbacaa9f01e8fd9a43e82d09a6f41d56d9fab13dc59928351b14d52670d60e4204b7b1ed67a1d8bad42515d31c26345
+
+      - name: debezium-postgres-connector
+        artifacts:
+          - type: tgz
+            # yamllint disable-line rule:line-length
+            url: https://repo1.maven.org/maven2/io/debezium/debezium-connector-postgres/2.7.0.Final/debezium-connector-postgres-2.7.0.Final-plugin.tar.gz
+            # yamllint disable-line rule:line-length
+            # sha512sum: c4da4907031ee8e8d31d11d33c82049b0cf82f853d5aab941988c1713eaad5fd6cc934b09679203de82cad9580a5c12669e14a4bd609f16151aa4265b8b67c42

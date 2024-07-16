@@ -1,0 +1,86 @@
+replicaCount: 1
+image:
+  repository: shadowtraffic/shadowtraffic
+  tag: latest
+  pullPolicy: IfNotPresent
+global: 
+  secretName: my-secrets
+
+globalConfigs: 
+
+generators:
+  - name: generator1
+    connection: pg
+    table: "testTable"
+    row:
+      testColumn:
+        _gen: "oneOf"
+        choices: ["👍", "🔥", "👑"]
+
+  - name: generator3
+    connection: azure
+    container: "sandbox"
+    containerConfigs:
+      keyPrefix: "foo-"
+      format: "jsonl"
+    data:
+      a:
+        _gen: "uuid"
+      b:
+        _gen: "boolean"
+    localConfigs:
+      throttleMs: 200
+
+connections:
+  pg:
+    kind: "postgres"
+    connectionConfigs:
+      host: "localhost"
+      port: 5432
+      db: "mydb"
+      username: "postgres"
+      password: postgresPassword
+        
+  azure:
+    kind: "azureBlobStorage"
+    connectionConfigs:
+      connectionString: azureString
+
+
+envs:
+  - name: postgresPassword
+    secretKeyRef:
+      key: POSTGRESPASSWORD
+  - name: azureString
+    secretKeyRef:
+      key: AZURESTRING
+  - name: LICENSE_ID
+    secretKeyRef:
+      key: LICENSE_ID
+  - name: LICENSE_EMAIL
+    secretKeyRef:
+      key: LICENSE_EMAIL
+  - name: LICENSE_ORGANIZATION
+    secretKeyRef:
+      key: LICENSE_ORGANIZATION
+  - name: LICENSE_EDITION
+    secretKeyRef:
+      key: LICENSE_EDITION
+  - name: LICENSE_EXPIRATION
+    secretKeyRef:
+      key: LICENSE_EXPIRATION
+  - name: LICENSE_SIGNATURE
+    secretKeyRef:
+      key: LICENSE_SIGNATURE
+
+
+cliSwitches:
+
+  configFile: ""
+  stdout: true
+  noPretty: false
+  sample: 
+  watch: true
+  quiet: false
+  seed: false
+  help: false

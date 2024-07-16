@@ -1,0 +1,113 @@
+# Default configuration for pre-requisites to get you started
+# Copy this file and update to the configuration of choice
+elasticsearch:
+  maxUnavailable: 0
+  enabled: true   
+  replicas: 1
+  minimumMasterNodes: 1
+  # Set replicas to 1 and uncomment this to allow the instance to be scheduled on
+  # a master node when deploying on a single node Minikube / Kind / etc cluster.
+  # antiAffinity: "soft"
+
+  # If your running a single replica cluster add the following helm value
+  clusterHealthCheckParams: "wait_for_status=yellow&timeout=5s"
+  esJavaOpts: "-Xms1960m -Xmx1960m"
+
+  esConfig:
+    elasticsearch.yml: |
+      xpack.security.enabled: false
+
+  extraEnvs:
+    - name: discovery.type
+      value: single-node
+    - name: cluster.initial_master_nodes
+      value: null
+
+  resources:
+    requests:
+      cpu: 1
+      memory: "2Gi"
+    limits:
+      cpu: 2
+      memory: "3Gi"
+
+  # Request smaller persistent volumes.
+  volumeClaimTemplate:
+    accessModes: ["ReadWriteOnce"]
+    storageClassName: "$(KAFKA_STORAGE_CLASS)"
+    resources:
+      requests:
+        storage: "$(ELASTICSEARCH_STORAGE_SIZE)"
+
+  podAnnotations:
+    co.elastic.logs/enabled: "true"
+    co.elastic.logs/module: "elasticsearch"
+    co.elastic.logs/processors.1.add_tags.tags: "[datahub]"
+
+# Official neo4j chart uses the Neo4j Enterprise Edition which requires a license
+# NOTE: We aren't using Neo4j
+neo4j:
+  enabled: false  # set this to true, if you have a license for the enterprise edition
+
+# Deploys neo4j community version. Only supports single node
+neo4j-community:
+  enabled: false
+
+mysql:
+  enabled: false
+
+cp-helm-charts:
+  # Schema registry is under the community license
+  cp-schema-registry:
+    enabled: true
+    kafka:
+      bootstrapServers: "datahub-prerequisites-kafka:9092"
+    replicaCount: 1
+    resources:
+      limits:
+        cpu: "300m"
+        memory: "384Mi"
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+    podAnnotations:
+      co.elastic.logs/enabled: "false"
+    heapOptions: "-Xms256m -Xmx256m"
+  cp-kafka:
+    enabled: false
+  cp-zookeeper:
+    enabled: false
+  cp-kafka-rest:
+    enabled: false
+  cp-kafka-connect:
+    enabled: false
+  cp-ksql-server:
+    enabled: false
+  cp-control-center:
+    enabled: false
+
+# Bitnami version of Kafka that deploys open source Kafka https://artifacthub.io/packages/helm/bitnami/kafka
+kafka:
+  enabled: true
+  heapOpts: "-Xms512m -Xmx968m"
+  logRetentionHours: "$(KAFKA_LOG_RETENTION_HOURS)"
+  maxMessageBytes: "$(KAFKA_MAX_MESSAGE_BYTES)"
+  resources:
+    requests:
+      cpu: "300m"
+      memory: "512Mi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+  persistence:
+    storageClass: "$(KAFKA_STORAGE_CLASS)"
+    size: "$(KAFKA_STORAGE_SIZE)"
+  podAnnotations:
+    co.elastic.logs/enabled: "true"
+    co.elastic.logs/include_lines: "\\[.8\\] (WARN(ING)?|ERROR).*"
+    co.elastic.logs/processors.1.add_tags.tags: "[datahub]"
+  readinessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 30
+    timeoutSeconds: 15
+    

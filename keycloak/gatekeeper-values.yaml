@@ -1,0 +1,18 @@
+config:
+  client-secret: "$CLIENT_SECRET"
+  discovery-url: "$DISCOVERY_URL"
+  secure-cookie: false
+  client-id: "$CLIENT_ID"
+  upstream-url: "$UPSTREAM_URL"
+  encryption-key: "$ENCRYPTION_KEY"
+  redirection-url: "$REDIRECTION_URL"
+  enable-refresh-tokens: true
+  server-read-timeout: 360s
+  server-write-timeout: 360s
+  upstream-timeout: 360s
+  upstream-response-header-timeout: 360s
+  enable-default-deny: false
+  cors-origins:
+    - "*"
+  resources:
+    - uri: /*

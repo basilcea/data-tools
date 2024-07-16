@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "shadowtraffic.fullname" . }}
+  labels:
+    {{- include "shadowtraffic.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "shadowtraffic.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "shadowtraffic.selectorLabels" . | nindent 8 }}
+    spec:
+      initContainers:
+        - name: copy-shadowtraffic-jar
+          image: "{{ $.Values.image.repository | default "shadowtraffic/shadowtraffic"  }}:{{ $.Values.image.tag | default "latest"  }}"
+          command: ["sh", "-c", "cp /home/shadowtraffic.jar /opt/jar/shadowtraffic.jar && chmod 755 /opt/jar/shadowtraffic.jar"]
+          volumeMounts:
+          - name: jar-volume
+            mountPath: /opt/jar
+      containers:
+      - name: shadowtraffic
+        image: "{{ $.Values.image.repository | default "shadowtraffic/shadowtraffic"  }}:{{ $.Values.image.tag | default "latest"  }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+        env:
+          {{- range .Values.envs }}
+          - name: {{ .name }}
+            valueFrom:
+              secretKeyRef:
+                key: {{ .secretKeyRef.key  }}
+                name: {{ .secretKeyRef.name | default $.Values.global.secretName  }}
+          {{- end }}
+        volumeMounts:
+          - name: config-vol
+            mountPath: /opt/config
+          - name: jar-volume
+            mountPath: /opt/jar
+            readOnly: true
+          {{- range .Values.volumes }}
+          - name: {{ .name }}
+            mountPath: {{ .mountPath | default "/" }}
+          {{- end }}
+          
+        command: ["java", "-jar", "/opt/jar/shadowtraffic.jar"]
+        args:
+          - "-c"
+          - {{ .Values.cliSwitches.configFile | default "/opt/config/config.json"  }}
+          {{- if .Values.cliSwitches.stdout }}
+          - "--stdout"
+          {{- end }}
+          {{- if .Values.cliSwitches.noPretty }}
+          - "--no-pretty"
+          {{- end }}
+          {{- if .Values.cliSwitches.sample }}
+          - "--sample"
+          - "{{ .Values.cliSwitches.sample }}"
+          {{- end }}
+          {{- if .Values.cliSwitches.watch }}
+          - "--watch"
+          {{- end }}
+          {{- if .Values.cliSwitches.quiet }}
+          - "--quiet"
+          {{- end }}
+          {{- if .Values.cliSwitches.seed }}
+          - "--seed  {{ .Values.cliSwitches.seed }}"
+         
+          {{- end }}
+          {{- if .Values.cliSwitches.help }}
+          - "--help"
+          {{- end }}
+      volumes:
+        - name: config-vol
+          configMap:
+            name: {{ .Release.Name }}-config
+        - name: jar-volume
+          emptyDir: {}
+
+        {{- range .Values.volumes }}
+        - name: {{ .name }}
+          {{- if .hostPath }}
+          hostPath:
+            path: {{ .hostPath }}
+          {{- else if .persistentVolumeClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .persistentVolumeClaim.claimName }}
+          {{- else if .configMap }}
+          configMap:
+            name: {{ .configMap.name }}
+          {{- end }}
+        {{- end }}
+

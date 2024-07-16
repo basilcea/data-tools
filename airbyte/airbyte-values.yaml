@@ -1,0 +1,121 @@
+version: $(AIRBYTE_VERSION)
+global:
+  database:
+    secretName: airbyte-secrets
+    secretValue: DATABASE_PASSWORD
+postgresql:
+  enabled: false
+externalDatabase:
+  database: $(POSTGRES_DATABASE)
+  host: $(POSTGRES_HOST)
+  port: 5432
+  user: $(POSTGRES_USER)
+  existingSecret: airbyte-secrets
+  existingSecretPasswordKey: DATABASE_PASSWORD
+minio:
+  auth:
+    rootUser: minio
+    rootPassword:
+      valueFrom:
+        secretKeyRef:
+          name: airbyte-secrets
+          key: MINIO_PASSWORD
+airbyte-bootloader:
+  enabled: true
+  extraEnv:
+    - name: DATABASE_USER
+      value: $(POSTGRES_USER)
+  resources:
+    limits:
+      cpu: 300m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+pod-sweeper:
+  timeToDeletePods:
+    running: 180
+    unsuccessful: $(FAILED_JOBS_CLEANUP_TIME)
+    succeeded: $(COMPLETED_JOBS_CLEANUP_TIME)
+  resources:
+    limits:
+      cpu: 300m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+webapp:
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  podAnnotations:
+    co.elastic.logs/enabled: "true"
+    co.elastic.logs/processors.1.add_tags.tags: "airbyte"
+    co.elastic.logs/multiline.type: "pattern"
+    co.elastic.logs/multiline.pattern: "^\\["
+    co.elastic.logs/multiline.negate: "true"
+    co.elastic.logs/multiline.match: "after"
+worker:
+  containerOrchestrator:
+    image: ""
+  resources:
+    limits:
+      cpu: 1
+      memory: 2048Mi
+    requests:
+      cpu: 100m
+      memory: 1024Mi
+server:
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: 1
+      memory: 1Gi
+  podAnnotations:
+    co.elastic.logs/enabled: "true"
+    co.elastic.logs/processors.1.add_tags.tags: "airbyte"
+    co.elastic.logs/processors.2.add_tags.tags: "airbyte-server"
+    co.elastic.logs/multiline.type: "pattern"
+    co.elastic.logs/multiline.pattern: "^\\["
+    co.elastic.logs/multiline.negate: "true"
+    co.elastic.logs/multiline.match: "after"
+temporal:
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+cron:
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+connector-builder-server:
+  resources:
+    requests:
+      cpu: 200m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+airbyte-api-server:
+  env_vars:
+    INTERNAL_API_HOST: http://airbyte-airbyte-server-svc:8001
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi

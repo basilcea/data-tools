@@ -1,0 +1,8 @@
+extends: default
+
+rules:
+  line-length:
+    max: 80  # Set your preferred line length limit
+    level: warning  # Set the level to warning (optional)
+    ignore: |  # Specify patterns to ignore
+      - .*  # This pattern matches all lines
