@@ -6,7 +6,7 @@ on:
       - airflow
       - main
       - develop
-      - release
+      - releases/airflow
 
       
 jobs:
@@ -53,6 +53,7 @@ jobs:
         path: ${{ github.workspace }}/releases/airflow
 
     - name: Create release
+      if: startsWith(github.ref, 'refs/heads/release/')
       uses: ncipollo/release-action@v1
       with:
         # artifactErrorsFailBuild: true
