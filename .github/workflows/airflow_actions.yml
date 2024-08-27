@@ -60,7 +60,7 @@ jobs:
         body: |
          - Deployment process moved from azure pipelines to github actions
          - Removed Azure Pipelines.yml file
-         - Updated Actions File
+         - Updated Actions Files
         tag:  ${{ steps.get_image_tag.outputs.IMAGE_TAG }}
         name:  Airflow_${{ steps.get_image_tag.outputs.IMAGE_TAG }}
         generateReleaseNotes: true
