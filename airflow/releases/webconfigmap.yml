@@ -1,0 +1,110 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: webconfigmap
+#   namespace: bi
+data:
+  webserver_config.py: |
+    from __future__ import annotations
+    import os
+    import sys
+    import logging
+    import jwt
+    import requests
+    from base64 import b64decode
+    from cryptography.hazmat.primitives import serialization
+    from tokenize import Exponent
+    from flask_appbuilder.security.manager import AUTH_OAUTH
+    from airflow.auth.managers.fab.security_manager.override import FabAirflowSecurityManagerOverride
+    from airflow.www.security import AirflowSecurityManager
+    from flask import redirect, request
+    from flask_appbuilder import expose
+    from flask_appbuilder.security.views import AuthOAuthView
+    basedir = os.path.abspath(os.path.dirname(__file__))
+    log = logging.getLogger(__name__)
+    # Flask-WTF flag for CSRF
+    WTF_CSRF_ENABLED = True
+    # ----------------------------------------------------
+    # AUTHENTICATION CONFIG
+    # ----------------------------------------------------
+    # For details on how to set up each of the following authentication, see
+    # http://flask-appbuilder.readthedocs.io/en/latest/security.html# authentication-methods
+    # for details.
+    AUTH_TYPE = AUTH_OAUTH
+    AUTH_USER_REGISTRATION = True
+    AUTH_ROLE_PUBLIC = 'Public'
+    AUTH_ROLES_SYNC_AT_LOGIN = True
+    AUTH_ROLES_MAPPING = {
+      "airflow_admin": ["Admin"],
+      "airflow_op": ["Op"],
+      "airflow_user": ["User"],
+      "airflow_viewer": ["Viewer"],
+      "airflow_public": ["Public"],
+    }
+    PROVIDER_NAME = 'keycloak'
+    CLIENT_ID = os.getenv("CLIENT_ID")
+
+    CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+    OIDC_ISSUER = os.getenv("DISCOVERY_URL")
+    OIDC_BASE_URL = "{oidc_issuer}/protocol/openid-connect".format(oidc_issuer=OIDC_ISSUER)
+    OIDC_TOKEN_URL = "{oidc_base_url}/token".format(oidc_base_url=OIDC_BASE_URL)
+    OIDC_AUTH_URL = "{oidc_base_url}/auth".format(oidc_base_url=OIDC_BASE_URL)
+    # When using OAuth Auth, uncomment to setup provider(s) info
+    OAUTH_PROVIDERS = [{
+        'name':PROVIDER_NAME,
+        'token_key':'access_token',
+        'icon':'fa-google',
+        'remote_app': {
+            'api_base_url':OIDC_BASE_URL,
+            'access_token_url':OIDC_TOKEN_URL,
+            'authorize_url':OIDC_AUTH_URL,
+            'request_token_url': None,
+            'client_id': CLIENT_ID,
+            'client_secret': CLIENT_SECRET,
+            'client_kwargs':{
+                'scope': 'email profile'
+            }
+           
+        }
+    }]
+    req = requests.get(OIDC_ISSUER)
+    key_der_base64 = req.json()["public_key"]
+    key_der = b64decode(key_der_base64.encode())
+    public_key = serialization.load_der_public_key(key_der)
+    class CustomAuthView(AuthOAuthView):
+        @expose("/logout/")
+        def logout(self):
+            """Delete access token before logging out."""
+            super().logout()
+            redirect_url = request.url_root.strip("/") + self.appbuilder.get_url_for_login
+            return redirect(f"{OIDC_BASE_URL}/logout?redirect_uri={redirect_url}")
+
+        
+            
+    class CustomSecurityManager(AirflowSecurityManager):
+        authoauthview = CustomAuthView
+        @expose("/login/")
+        def oauth_user_info(self, provider, response):
+            if provider == PROVIDER_NAME:
+                token = response["access_token"]
+                me = jwt.decode(token, public_key, algorithms=['HS256', 'RS256'], audience=CLIENT_ID)
+                groups = me["resource_access"]["airflow"]["roles"] # unsafe
+                if len(groups) < 1:
+                    groups = ["airflow_public"]
+                else:
+                    groups = [str for str in groups if "airflow" in str]
+                userinfo = {
+                    "username": me.get("preferred_username"),
+                    "email": me.get("email"),
+                    "first_name": me.get("given_name"),
+                    "last_name": me.get("family_name"),
+                    "role_keys": groups,
+                }
+                log.info("user info: {0}".format(userinfo))
+                return userinfo
+            else:
+                return {}
+
+        
+        
+    SECURITY_MANAGER_CLASS = CustomSecurityManager
