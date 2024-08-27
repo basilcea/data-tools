@@ -6,7 +6,7 @@ on:
       - airflow
       - main
       - develop
-      - QA
+      - release
 
       
 jobs:
