@@ -1,0 +1,24 @@
+config:
+  client-secret: "$(PROXY_CLIENT_SECRET)"
+  discovery-url: "$(DISCOVER_URL)"
+  secure-cookie: false
+  client-id: "$(CLIENT_ID)"
+  upstream-url: "$(UPSTREAM_URL)"
+  encryption-key: "$(PROXY_ENCRYPTION_KEY)"
+  redirection-url: "$(PROXY_REDIRECTION_URL)"
+  enable-refresh-tokens: true
+  server-read-timeout: 360s
+  server-write-timeout: 360s
+  upstream-timeout: 360s
+  upstream-response-header-timeout: 360s
+  enable-default-deny: false
+  cors-origins:
+    - "*"
+  resources:
+    - uri: /*
+      roles:
+        - $(ROLE)
+    - uri: /manifest.json
+      white-listed: true
+    - uri: /favicon
+      white-listed: true

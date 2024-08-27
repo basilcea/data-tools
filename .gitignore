@@ -1,0 +1,5 @@
+/secured
+node_modules
+appsettings.json
+.env
+*gen.yml
