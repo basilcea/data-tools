@@ -1,0 +1,148 @@
+
+config:
+  core:
+    AIRFLOW__KUBERNETES__KUBE_CLIENT_REQUEST_ARGS: '{\"_request_timeout\":60}'
+    test_connection: Enabled
+    plugins_folder: /opt/airflow/dags/repo/plugins
+images:
+  airflow:
+    repository: mrcea/airflow
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: 2.10.0_20241021_145115
+logs:
+  persistence:
+    enabled: true
+    size: 40Gi
+    # storageClassName: oaf-shared
+workers:
+  persistence:
+    size: 40Gi
+    # storageClassName: oaf-storage
+cleanup:
+  enabled: True
+  schedule: '*/10 * * * *'
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 128M
+triggerer:
+  persistence:
+    size: 40Gi
+    # storageClassName: oaf-storage
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+scheduler:
+  resources:
+    limits:
+      cpu: 1
+      memory: 1Gi
+    requests:
+      cpu: 1
+      memory: 128Mi
+webserver:
+  resources:
+    limits:
+      cpu: 2
+      memory: 5Gi
+    requests:
+      cpu: 500m
+      memory: 500Mi
+  defaultUser:
+    enabled: false
+  webserverConfigConfigMapName: webconfigmap
+  env:
+    - name: DISCOVERY_URL
+      value: $DISCOVERY_URL
+    - name: CLIENT_ID
+      value: $CLIENT_ID
+    - name: CLIENT_SECRET
+      value: $CLIENT_SECRET
+fernetKey: fernet-key
+webserverSecretKey: webserver-secret-key
+webserverSecretKeySecretName: airflow-user-secrets
+fernetKeySecretName: airflow-user-secrets
+postgresql:
+  enabled: true
+  auth:
+    enablePostgresUser: true
+    postgresPassword: $POSTGRES_ADMIN_PASSWORD
+    username: $POSTGRES_USER
+    password: $POSTGRES_PASSWORD
+data:
+  metadataSecretName: airflow-user-secrets
+pgbouncer:
+  enabled: true
+  # The maximum number of connections to PgBouncer
+  maxClientConn: 10
+  # The maximum number of server connections to the metadata database from PgBouncer
+  metadataPoolSize: 10
+  # The maximum number of server connections to the result backend database from PgBouncer
+  resultBackendPoolSize: 5
+executor: KubernetesExecutor
+uid: 65533
+gid: 0
+securityContexts:
+  pod:
+    runAsUser: 65533
+    runAsGroup: 0
+  containers:
+    runAsUser: 65533
+    runAsGroup: 0
+dags:
+  gitSync:
+    enabled: true
+    repo: $DAGS_REPO
+    branch: $AIRFLOW_BRANCH_NAME
+    subPath: 'dags'
+    wait: 60
+    credentialsSecret: airflow-user-secrets
+    knownHosts: $KNOWN_HOSTS
+elasticsearch:
+  enabled: false
+  secretName: airflow-user-secrets
+env:
+  - name: "AIRFLOW_VAR_BRANCH"
+    value: $AIRFLOW_BRANCH_NAME
+  - name: "AIRFLOW_VAR_DAGS_REPO"
+    value: $PUSH_REPO
+  - name: "AIRFLOW_VAR_SAVE_TO_FILE"
+    value: "FALSE"
+  - name: "DBT_SNOWFLAKE_ACCOUNT"
+    value: $DBT_SNOWFLAKE_ACCOUNT
+  - name: "DBT_SNOWFLAKE_ROLE"
+    value: $DBT_SNOWFLAKE_ROLE
+  - name: "DBT_SNOWFLAKE_USER"
+    value: $DBT_SNOWFLAKE_USER
+  - name: "DBT_SNOWFLAKE_WAREHOUSE"
+    value: $DBT_SNOWFLAKE_WAREHOUSE
+  - name: "DBT_POSTGRES_USER"
+    value: $DBT_POSTGRES_USER
+  - name: "DBT_POSTGRES_PORT"
+    value: "$DBT_POSTGRES_PORT"
+  - name: "DBT_POSTGRES_HOST"
+    value: $DBT_POSTGRES_HOST
+secret:
+  - envName: "AIRFLOW_VAR_GITHUB_ACCESS_TOKEN"
+    secretName: airflow-user-secrets
+    secretKey: "GIT_SYNC_PASSWORD"
+  - envName: "SODA_API_KEY"
+    secretName: airflow-user-secrets
+    secretKey: "SODA_API_KEY"
+  - envName: "SODA_API_KEY_SECRET"
+    secretName: airflow-user-secrets
+    secretKey: "SODA_API_KEY_SECRET"
+  - envName: "DBT_ENV_SECRET_SNOWFLAKE_PASSWORD"
+    secretName: airflow-user-secrets
+    secretKey: "DBT_ENV_SECRET_SNOWFLAKE_PASSWORD"
+  - envName: "DBT_ENV_SECRET_POSTGRES_PASSWORD"
+    secretName: airflow-user-secrets
+    secretKey: "DBT_ENV_SECRET_POSTGRES_PASSWORD"
