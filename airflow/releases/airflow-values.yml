@@ -4,6 +4,7 @@ config:
     AIRFLOW__KUBERNETES__KUBE_CLIENT_REQUEST_ARGS: '{\"_request_timeout\":60}'
     test_connection: Enabled
     plugins_folder: /opt/airflow/dags/repo/plugins
+    tmp_dir: /
 images:
   airflow:
     repository: mrcea/airflow
@@ -13,11 +14,11 @@ images:
 logs:
   persistence:
     enabled: true
-    size: 40Gi
+    size: 10Gi
     # storageClassName: oaf-shared
 workers:
   persistence:
-    size: 40Gi
+    size: 10Gi
     # storageClassName: oaf-storage
 cleanup:
   enabled: True
@@ -57,8 +58,8 @@ webserver:
       cpu: 500m
       memory: 500Mi
   defaultUser:
-    enabled: false
-  webserverConfigConfigMapName: webconfigmap
+    enabled: true
+  # webserverConfigConfigMapName: webconfigmap
   env:
     - name: DISCOVERY_URL
       value: $DISCOVERY_URL

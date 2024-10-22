@@ -2,17 +2,17 @@
 
 # Parse command-line arguments\
 set -a
-source ./.env
+source ../.env
 set +a
 envsubst < releases/airflow-values.yml > releases/airflow-values-gen.yml
 
 DOCKERFILE="custom_image/Dockerfile"
 REQUIREMENTS_FILE="custom_image/requirements.txt"
 
-# if git diff --quiet HEAD -- "$DOCKERFILE" "$REQUIREMENTS_FILE"; then
-#     echo "No changes detected in $DOCKERFILE or $REQUIREMENTS_FILE. Skipping docker buildx."
-# else
-#     echo "Changes detected in $DOCKERFILE or $REQUIREMENTS_FILE. Running docker buildx."
+if git diff --quiet HEAD -- "$DOCKERFILE" "$REQUIREMENTS_FILE"; then
+    echo "No changes detected in $DOCKERFILE or $REQUIREMENTS_FILE. Skipping docker buildx."
+else
+    echo "Changes detected in $DOCKERFILE or $REQUIREMENTS_FILE. Running docker buildx."
     
     AIRFLOW_VERSION="2.10.0"
     IMAGE_TAG="${AIRFLOW_VERSION}_$(date +'%Y%m%d_%H%M%S')"
@@ -25,12 +25,12 @@ REQUIREMENTS_FILE="custom_image/requirements.txt"
     yq e ".images.airflow.tag = \"$IMAGE_TAG\"" -i "releases/airflow-values-gen.yml"
     yq e ".images.airflow.tag = \"$IMAGE_TAG\"" -i "releases/airflow-values.yml"
     echo "Updated IMAGE_TAG to: $IMAGE_TAG"
-# fi
+fi
 
 
 echo "Creating secret: airflow-user-secrets..."
-kubectl create secret generic airflow-user-secrets \
-    --from-literal=connection="postgresql://$POSTGRES_USER :$POSTGRES_PASSWORD @$POSTGRES_HOST:$POSTGRES_PORT /$POSTGRES_DB  \
+kubectl create secret generic -n bi airflow-user-secrets \
+    --from-literal=connection="postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB"  \
     --from-literal=webserver-secret-key=$(python3 -c 'import secrets; print(secrets.token_hex(16))') \
     --from-literal=fernet-key=$FERNET_KEY  \
     --from-literal=GIT_SYNC_USERNAME=$GIT_SYNC_USERNAME  \
@@ -42,19 +42,21 @@ kubectl create secret generic airflow-user-secrets \
     --from-literal=SODA_API_KEY_SECRET=$SODA_API_KEY_SECRET  \
     --from-literal=AIRFLOW_VAR_GITHUB_ACCESS_TOKEN=$GIT_SYNC_PASSWORD \
     --from-literal=DBT_ENV_SECRET_POSTGRES_PASSWORD=$DBT_ENV_SECRET_POSTGRES_PASSWORD  \
-    -n bi " \
     -o yaml --dry-run=client | kubectl apply -f -
 
 echo "Register airbyte charts repository..."
 # helm delete --namespace bi airflow
 helm repo add apache-airflow https://airflow.apache.org
 
-kubectl apply -f releases/webconfigmap.yml
+# kubectl apply -f releases/webconfigmap.yml
 
 # helm rollback airflow  --namespace bi
-helm uninstall  airflow
-# kubectl delete pvc airflow-logs
-# kubectl delete pvc airflow-postgresql
+
+# helm uninstall  airflow -n bi
+# kubectl delete pvc airflow-logs -n bi
+# kubectl delete pvc data-airflow-postgresql-0 -n bi
+
+
 
 echo "Install airflow"
 helm upgrade \
@@ -65,4 +67,4 @@ helm upgrade \
     --debug \
     airflow apache-airflow/airflow
 
-rm -rf airflow-values-gen.yml
+rm -rf releases/airflow-values-gen.yml

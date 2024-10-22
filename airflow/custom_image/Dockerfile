@@ -3,8 +3,7 @@ USER root
 ARG AIRFLOW_UID=65533
 
 RUN usermod -u ${AIRFLOW_UID} airflow && \
-    chown -R airflow:root /opt/airflow
-
+    chown -R airflow:root /
 USER airflow
 # Update the GID of directories and make them writable by the group
 COPY custom_image/requirements.txt /
