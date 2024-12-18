@@ -4,9 +4,10 @@
 set -a
 source ../.env
 set +a
-envsubst < releases/airflow-values.yml > releases/airflow-values-gen.yml
 
-DOCKERFILE="custom_image/Dockerfile"
+
+AIRFLOWDOCKERFILE="custom_image/Dockerfile"
+
 REQUIREMENTS_FILE="custom_image/requirements.txt"
 
 if git diff --quiet HEAD -- "$DOCKERFILE" "$REQUIREMENTS_FILE"; then
@@ -20,13 +21,13 @@ else
     echo "Generated Image Tag: ${IMAGE_TAG}"
 
     echo "building airflow docker-image"
-    docker buildx build --platform linux/amd64 -t mrcea/airflow:${IMAGE_TAG} -f ${DOCKERFILE}  --push .
-
+    docker buildx build --platform linux/amd64 -t mrcea/airflow:${IMAGE_TAG} -f ${AIRFLOWDOCKERFILE}  --push .
     yq e ".images.airflow.tag = \"$IMAGE_TAG\"" -i "releases/airflow-values-gen.yml"
     yq e ".images.airflow.tag = \"$IMAGE_TAG\"" -i "releases/airflow-values.yml"
     echo "Updated IMAGE_TAG to: $IMAGE_TAG"
 fi
 
+envsubst < releases/airflow-values.yml > releases/airflow-values-gen.yml
 
 echo "Creating secret: airflow-user-secrets..."
 kubectl create secret generic -n bi airflow-user-secrets \
@@ -50,11 +51,13 @@ helm repo add apache-airflow https://airflow.apache.org
 
 # kubectl apply -f releases/webconfigmap.yml
 
+kubectl apply -f releases/targets.yml -n bi
+
 # helm rollback airflow  --namespace bi
 
-# helm uninstall  airflow -n bi
-# kubectl delete pvc airflow-logs -n bi
-# kubectl delete pvc data-airflow-postgresql-0 -n bi
+helm uninstall  airflow -n bi
+kubectl delete pvc airflow-logs -n bi
+kubectl delete pvc data-airflow-postgresql-0 -n bi
 
 
 

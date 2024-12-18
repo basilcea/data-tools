@@ -1,6 +1,6 @@
  *.env.yaml
  .env
- 
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -115,3 +115,4 @@ desktop.ini
 # Ignore generated yaml files
 *.env.yaml
 *.env.yml
+.yamllint.yml

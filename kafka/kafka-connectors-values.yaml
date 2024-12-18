@@ -1,7 +1,7 @@
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaConnector
 metadata:
-  name: debezium-postgres-connector  # (1)
+  name:  my-cluster-debezium-postgres-connector  # (1)
   labels:
     strimzi.io/cluster: my-connect-cluster-pool-b # (2)
 spec:
@@ -10,14 +10,14 @@ spec:
   config:
     database.hostname: database-postgresql
     database.port: 5432
-    database.user: replicaUser
-    database.password: ${REPLICATIONPASSWORD}
-    database.dbname: users
+    database.user: ${REPLICA_USER}
+    database.password: ${REPLICATION_PASSWORD}
+    database.dbname: development
     topic.prefix: users
     plugin.name: pgoutput
-    publication.autocreate.mode: filtered
-    schema.include.list: ''
-    table.include.list: ''
+    # publication.autocreate.mode: filtered
+    # schema.include.list: '*'
+    # table.include.list: '*'
 
 ---
 
@@ -32,9 +32,12 @@ spec:
   class: org.apache.camel.kafkaconnector.springrabbitmqsource.CamelSpringrabbitmqsourceSourceConnector
   tasksMax: 1
   config:
-    camel.kamelet.spring-rabbitmq-source.host:
-    camel.kamelet.spring-rabbitmq-source.port:
+    camel.kamelet.spring-rabbitmq-source.host: eventing-rabbitmq
+    camel.kamelet.spring-rabbitmq-source.port: 5672
     camel.kamelet.spring-rabbitmq-source.routingKey: '#.kafka.*'
-    camel.kamelet.spring-rabbitmq-source.username:
-    camel.kamelet.spring-rabbitmq-source.password:
+    camel.kamelet.spring-rabbitmq-source.username: ${RABBITMQ_USER}
+    camel.kamelet.spring-rabbitmq-source.password: ${RABBITMQ_PASSWORD}
     camel.kamelet.spring-rabbitmq-source.exchangeName: 'testing-ex'
+    camel.kamelet.spring-rabbitmq-source.queues: kafka-queue
+    camel.kamelet.spring-rabbitmq-source.autoDeclare: false
+    topics: users.rabbitmq

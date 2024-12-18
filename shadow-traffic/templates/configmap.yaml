@@ -6,7 +6,9 @@ data:
   config.json: |
     {
       "globalConfigs": {{ $.Values.globalConfigs | default dict | toJson }},
-      "schedule": {{ $.Values.globalConfigs | default dict | toJson }},
+      {{- if $.Values.schedule }}
+      "schedule": {{ $.Values.schedule | toJson }},
+      {{- end }}
       "generators": {{ $.Values.generators | default list | toJson }},
       "connections": {{$.Values.connections | default list | toJson}}
     }

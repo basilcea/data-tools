@@ -2,19 +2,19 @@
 config:
   core:
     AIRFLOW__KUBERNETES__KUBE_CLIENT_REQUEST_ARGS: '{\"_request_timeout\":60}'
+    AIRFLOW__KUBERNETES_EXECUTOR__DELETE_WORKER_PODS_ON_FAILURE: True
     test_connection: Enabled
     plugins_folder: /opt/airflow/dags/repo/plugins
-    tmp_dir: /
 images:
   airflow:
     repository: mrcea/airflow
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: 2.10.0_20241021_145115
+    tag: 2.10.0_20241025_105812
 logs:
   persistence:
     enabled: true
-    size: 10Gi
+    size: 40Gi
     # storageClassName: oaf-shared
 workers:
   persistence:
@@ -119,6 +119,8 @@ env:
     value: "FALSE"
   - name: "DBT_SNOWFLAKE_ACCOUNT"
     value: $DBT_SNOWFLAKE_ACCOUNT
+  - name: "DBT_LOG_PATH"
+    value: $DBT_LOG_PATH
   - name: "DBT_SNOWFLAKE_ROLE"
     value: $DBT_SNOWFLAKE_ROLE
   - name: "DBT_SNOWFLAKE_USER"
@@ -147,3 +149,15 @@ secret:
   - envName: "DBT_ENV_SECRET_POSTGRES_PASSWORD"
     secretName: airflow-user-secrets
     secretKey: "DBT_ENV_SECRET_POSTGRES_PASSWORD"
+volumeMounts:
+  - name: dbt-snowflake-target
+    mountPath: /opt/airflow/snowflake
+  - name: dbt-mssql-target
+    mountPath: /opt/airflow/mssql
+volumes:
+  - name: dbt-snowflake-target
+    persistentVolumeClaim:
+      claimName: dbt-snowflake-target
+  - name: dbt-mssql-target
+    persistentVolumeClaim:
+      claimName: dbt-mssql-target

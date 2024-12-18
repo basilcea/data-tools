@@ -16,6 +16,17 @@ spec:
     trustedCertificates:
       - secretName: my-cluster-a-cluster-ca-cert
         certificate: ca.crt
+  authentication:
+    type: oauth
+    clientId: ${KAFKA_CONNECT_CLIENT_ID}
+    tokenEndpointUri: https://keycloak/realms/kafka-authz/protocol/openid-connect/token
+    tlsTrustedCertificates:
+      - secretName: keycloak-crt
+        certificate: ca.crt
+    clientSecret:
+      key: KAFKA_CONNECT_SECRET
+      secretName: keycloak-secrets
+
   config:
     group.id: connect-cluster-pool-a
     offset.storage.topic: connect-cluster-pool-a-offsets
@@ -25,12 +36,12 @@ spec:
     config.storage.replication.factor: -1
     offset.storage.replication.factor: -1
     status.storage.replication.factor: -1
-  metricsConfig:
-    type: jmxPrometheusExporter
-    valueFrom:
-      configMapKeyRef:
-        name: connect-metrics
-        key: connect-metrics-config.yml
+  # metricsConfig:
+  #   type: jmxPrometheusExporter
+  #   valueFrom:
+  #     configMapKeyRef:
+  #       name: connect-metrics
+  #       key: connect-metrics-config.yml
 
 ---
 apiVersion: kafka.strimzi.io/v1beta2
@@ -52,6 +63,17 @@ spec:
     trustedCertificates:
       - secretName: my-cluster-a-cluster-ca-cert
         certificate: ca.crt
+  authentication:
+    type: oauth
+    clientId: ${KAFKA_CONNECT_CLIENT_ID}
+    tokenEndpointUri: https://keycloak/realms/kafka-authz/protocol/openid-connect/token
+    tlsTrustedCertificates:
+      - secretName: keycloak-crt
+        certificate: ca.crt
+    clientSecret:
+      key: KAFKA_CONNECT_SECRET
+      secretName: keycloak-secrets
+
   config:
     group.id: connect-cluster-pool-b
     offset.flush.timeout.ms: 10000
@@ -67,7 +89,6 @@ spec:
     output: # (2)
       type: docker
       image: docker.io/mrcea/kafka-connectors:latest
-      pushSecret: docker-secret
 
     plugins: # (3)
       - name: camel-spring-rabbitmq-connector

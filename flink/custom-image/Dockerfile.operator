@@ -1,0 +1,7 @@
+FROM apache/flink-kubernetes-operator
+
+RUN mkdir /opt/flink/lib
+RUN wget -P /opt/flink/lib/ https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-kafka/1.17.2/flink-sql-connector-kafka-1.17.2.jar
+RUN wget -P /opt/flink/lib/ https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-rabbitmq/3.0.1-1.17/flink-sql-connector-rabbitmq-3.0.1-1.17.jar
+RUN wget -P /opt/flink/lib/ https://repo.maven.apache.org/maven2/org/apache/flink/flink-python/1.17.2/flink-python-1.17.2.jar
+RUN wget -P /opt/flink/lib/ https://repo.maven.apache.org/maven2/org/apache/flink/flink-connector-debezium/3.1.1/flink-connector-debezium-3.1.1.jar

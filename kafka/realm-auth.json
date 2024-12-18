@@ -1,0 +1,230 @@
+{
+    "allowRemoteResourceManagement": true,
+    "policyEnforcementMode": "ENFORCING",
+    "resources": [
+      {
+        "name": "Topic:connect-cluster-pool-*",
+        "ownerManagedAccess": false,
+        "displayName": "Topic:connect-cluster-pool-*",
+        "attributes": {},
+        "uris": [],
+        "scopes": [
+          {
+            "name": "Write"
+          },
+          {
+            "name": "Create"
+          },
+          {
+            "name": "Describe"
+          },
+          {
+            "name": "Alter"
+          },
+          {
+            "name": "Read"
+          },
+          {
+            "name": "DescribeConfigs"
+          },
+          {
+            "name": "AlterConfigs"
+          },
+          {
+            "name": "ClusterAction"
+          }
+        ],
+        "icon_uri": ""
+      },
+      {
+        "name": "Group:connect-cluster-pool-*",
+        "ownerManagedAccess": false,
+        "displayName": "Group:connect-cluster-pool-*",
+        "attributes": {},
+        "uris": [],
+        "scopes": [
+          {
+            "name": "Write"
+          },
+          {
+            "name": "Create"
+          },
+          {
+            "name": "Describe"
+          },
+          {
+            "name": "Alter"
+          },
+          {
+            "name": "Read"
+          },
+          {
+            "name": "DescribeConfigs"
+          },
+          {
+            "name": "AlterConfigs"
+          },
+          {
+            "name": "ClusterAction"
+          }
+        ],
+        "icon_uri": ""
+      },
+      {
+        "name": "Topic:mirrormaker2*",
+        "ownerManagedAccess": false,
+        "displayName": "Topic:mirrormaker2*",
+        "attributes": {},
+        "uris": [],
+        "scopes": [
+          {
+            "name": "Delete"
+          },
+          {
+            "name": "Write"
+          },
+          {
+            "name": "Create"
+          },
+          {
+            "name": "Describe"
+          },
+          {
+            "name": "Alter"
+          },
+          {
+            "name": "Read"
+          },
+          {
+            "name": "DescribeConfigs"
+          },
+          {
+            "name": "AlterConfigs"
+          }
+        ],
+        "icon_uri": ""
+      },
+      {
+        "name": "Group:mirrormaker2*",
+        "ownerManagedAccess": false,
+        "displayName": "Group:mirrormaker2*",
+        "attributes": {},
+        "uris": [],
+        "scopes": [
+          {
+            "name": "Delete"
+          },
+          {
+            "name": "Write"
+          },
+          {
+            "name": "Create"
+          },
+          {
+            "name": "Describe"
+          },
+          {
+            "name": "Alter"
+          },
+          {
+            "name": "Read"
+          },
+          {
+            "name": "DescribeConfigs"
+          },
+          {
+            "name": "AlterConfigs"
+          }
+        ],
+        "icon_uri": ""
+      }
+    ],
+    "policies": [
+      {
+        "name": "Kafka Connect Policy",
+        "description": "",
+        "type": "client",
+        "logic": "POSITIVE",
+        "decisionStrategy": "UNANIMOUS",
+        "config": {
+          "clients": "[\"kafka-connect\"]"
+        }
+      },
+      {
+        "name": "Kafka bridge policy",
+        "description": "",
+        "type": "client",
+        "logic": "POSITIVE",
+        "decisionStrategy": "UNANIMOUS",
+        "config": {
+          "clients": "[\"kafka-bridge\"]"
+        }
+      },
+      {
+        "name": "Kafka MirrorMaker Policy",
+        "description": "",
+        "type": "client",
+        "logic": "POSITIVE",
+        "decisionStrategy": "UNANIMOUS",
+        "config": {
+          "clients": "[\"kafka-connect\"]"
+        }
+      },
+      {
+        "name": "Kafka Connect  can access Kafka Cluster",
+        "description": "",
+        "type": "resource",
+        "logic": "POSITIVE",
+        "decisionStrategy": "UNANIMOUS",
+        "config": {
+          "resources": "[\"Group:connect-cluster-pool-*\",\"Topic:connect-cluster-pool-*\"]",
+          "applyPolicies": "[\"Kafka Connect Policy\"]"
+        }
+      },
+      {
+        "name": "MirrorMarker can access kafka cluster",
+        "description": "",
+        "type": "resource",
+        "logic": "POSITIVE",
+        "decisionStrategy": "UNANIMOUS",
+        "config": {
+          "resources": "[\"Topic:mirrormaker2*\",\"Group:mirrormaker2*\",\"Topic:connect-cluster-pool-*\"]",
+          "applyPolicies": "[\"Kafka MirrorMaker Policy\"]"
+        }
+      }
+    ],
+    "scopes": [
+      {
+        "name": "Create"
+      },
+      {
+        "name": "Read"
+      },
+      {
+        "name": "Write"
+      },
+      {
+        "name": "Delete"
+      },
+      {
+        "name": "Alter"
+      },
+      {
+        "name": "Describe"
+      },
+      {
+        "name": "ClusterAction"
+      },
+      {
+        "name": "DescribeConfigs"
+      },
+      {
+        "name": "AlterConfigs"
+      },
+      {
+        "name": "IdempotentWrite"
+      }
+    ],
+    "decisionStrategy": "AFFIRMATIVE"
+  }
+  

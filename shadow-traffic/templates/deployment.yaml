@@ -19,58 +19,58 @@ spec:
           image: "{{ $.Values.image.repository | default "shadowtraffic/shadowtraffic"  }}:{{ $.Values.image.tag | default "latest"  }}"
           command: ["sh", "-c", "cp /home/shadowtraffic.jar /opt/jar/shadowtraffic.jar && chmod 755 /opt/jar/shadowtraffic.jar"]
           volumeMounts:
-          - name: jar-volume
-            mountPath: /opt/jar
+            - name: jar-volume
+              mountPath: /opt/jar
       containers:
-      - name: shadowtraffic
-        image: "{{ $.Values.image.repository | default "shadowtraffic/shadowtraffic"  }}:{{ $.Values.image.tag | default "latest"  }}"
-        imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
-        env:
-          {{- range .Values.envs }}
-          - name: {{ .name }}
-            valueFrom:
-              secretKeyRef:
-                key: {{ .secretKeyRef.key  }}
-                name: {{ .secretKeyRef.name | default $.Values.global.secretName  }}
-          {{- end }}
-        volumeMounts:
-          - name: config-vol
-            mountPath: /opt/config
-          - name: jar-volume
-            mountPath: /opt/jar
-            readOnly: true
-          {{- range .Values.volumes }}
-          - name: {{ .name }}
-            mountPath: {{ .mountPath | default "/" }}
-          {{- end }}
-          
-        command: ["java", "-jar", "/opt/jar/shadowtraffic.jar"]
-        args:
-          - "-c"
-          - {{ .Values.cliSwitches.configFile | default "/opt/config/config.json"  }}
-          {{- if .Values.cliSwitches.stdout }}
-          - "--stdout"
-          {{- end }}
-          {{- if .Values.cliSwitches.noPretty }}
-          - "--no-pretty"
-          {{- end }}
-          {{- if .Values.cliSwitches.sample }}
-          - "--sample"
-          - "{{ .Values.cliSwitches.sample }}"
-          {{- end }}
-          {{- if .Values.cliSwitches.watch }}
-          - "--watch"
-          {{- end }}
-          {{- if .Values.cliSwitches.quiet }}
-          - "--quiet"
-          {{- end }}
-          {{- if .Values.cliSwitches.seed }}
-          - "--seed  {{ .Values.cliSwitches.seed }}"
-         
-          {{- end }}
-          {{- if .Values.cliSwitches.help }}
-          - "--help"
-          {{- end }}
+        - name: shadowtraffic
+          image: "{{ $.Values.image.repository | default "shadowtraffic/shadowtraffic"  }}:{{ $.Values.image.tag | default "latest"  }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+          env:
+            {{- range .Values.envs }}
+            - name: {{ .name }}
+              valueFrom:
+                secretKeyRef:
+                  key: {{ .secretKeyRef.key  }}
+                  name: {{ .secretKeyRef.name | default $.Values.global.secretName  }}
+            {{- end }}
+          volumeMounts:
+            - name: config-vol
+              mountPath: /opt/config
+            - name: jar-volume
+              mountPath: /opt/jar
+              readOnly: true
+            {{- range .Values.volumeMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath | default "/" }}
+            {{- end }}
+            
+          command: ["java", "-jar", "/opt/jar/shadowtraffic.jar"]
+          args:
+            - "-c"
+            - {{ .Values.cliSwitches.configFile | default "/opt/config/config.json"  }}
+            {{- if .Values.cliSwitches.stdout }}
+            - "--stdout"
+            {{- end }}
+            {{- if .Values.cliSwitches.noPretty }}
+            - "--no-pretty"
+            {{- end }}
+            {{- if .Values.cliSwitches.sample }}
+            - "--sample"
+            - "{{ .Values.cliSwitches.sample }}"
+            {{- end }}
+            {{- if .Values.cliSwitches.watch }}
+            - "--watch"
+            {{- end }}
+            {{- if .Values.cliSwitches.quiet }}
+            - "--quiet"
+            {{- end }}
+            {{- if .Values.cliSwitches.seed }}
+            - "--seed"
+            - {{printf "%.0f" .Values.cliSwitches.seed | quote}}
+            {{- end }}
+            {{- if .Values.cliSwitches.help }}
+            - "--help"
+            {{- end }}
       volumes:
         - name: config-vol
           configMap:
@@ -81,14 +81,17 @@ spec:
         {{- range .Values.volumes }}
         - name: {{ .name }}
           {{- if .hostPath }}
-          hostPath:
-            path: {{ .hostPath }}
+          hostpath:
+            path: {{ .hostPath.path }}
           {{- else if .persistentVolumeClaim }}
           persistentVolumeClaim:
             claimName: {{ .persistentVolumeClaim.claimName }}
           {{- else if .configMap }}
           configMap:
             name: {{ .configMap.name }}
+          {{- else if .secret }}
+          secret:
+            secretName: {{ .secret.secretName }}
           {{- end }}
         {{- end }}
 

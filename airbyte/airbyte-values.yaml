@@ -1,16 +1,16 @@
 version: $(AIRBYTE_VERSION)
 global:
   database:
-    secretName: airbyte-secrets
+    secretName: postgres-secrets
     secretValue: DATABASE_PASSWORD
 postgresql:
   enabled: false
 externalDatabase:
-  database: $(POSTGRES_DATABASE)
+  database: $(AIRBYTE_DATABASE)
   host: $(POSTGRES_HOST)
   port: 5432
-  user: $(POSTGRES_USER)
-  existingSecret: airbyte-secrets
+  user: $(AIRBYTE_USER)
+  existingSecret: postgres-secrets
   existingSecretPasswordKey: DATABASE_PASSWORD
 minio:
   auth:

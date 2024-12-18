@@ -1,7 +1,7 @@
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaMirrorMaker2
 metadata:
-  name: my-mirror-maker-2
+  name: my-cluster-mirror-maker-2
 spec:
   version: 3.7.1
   replicas: 1
@@ -9,21 +9,41 @@ spec:
   clusters:
     - alias: "my-cluster-a" # Source cluster
       bootstrapServers: my-cluster-a-kafka-bootstrap:9093
+      authentication:
+        type: oauth
+        clientId: ${KAFKA_CONNECT_CLIENT_ID}
+        tokenEndpointUri: https://keycloak/realms/kafka-authz/protocol/openid-connect/token
+        tlsTrustedCertificates:
+          - secretName: keycloak-crt
+            certificate: ca.crt
+        clientSecret:
+          key: KAFKA_CONNECT_SECRET
+          secretName: keycloak-secrets
       tls:
         trustedCertificates:
           - secretName: my-cluster-a-cluster-ca-cert
-            pattern: "*.crt"
-    - alias: "cluster-b" # Target cluster
+            pattern: "ca.crt"
+    - alias: "my-cluster-b" # Target cluster
       bootstrapServers: my-cluster-b-kafka-bootstrap:9093
+      authentication:
+        type: oauth
+        clientId: ${KAFKA_CONNECT_CLIENT_ID}
+        tokenEndpointUri: https://keycloak/realms/kafka-authz/protocol/openid-connect/token
+        tlsTrustedCertificates:
+          - secretName: keycloak-crt
+            certificate: ca.crt
+        clientSecret:
+          key: KAFKA_CONNECT_SECRET
+          secretName: keycloak-secrets
       tls:
         trustedCertificates:
           - secretName: my-cluster-b-cluster-ca-cert
-            pattern: "*.crt"
-  config:
-    # -1 means it will use the default replication factor configured in broker
-    config.storage.replication.factor: -1
-    offset.storage.replication.factor: -1
-    status.storage.replication.factor: -1
+            pattern: "ca.crt"
+      config:
+        # -1 means it will use the default replication factor configured in broker
+        config.storage.replication.factor: -1
+        offset.storage.replication.factor: -1
+        status.storage.replication.factor: -1
   mirrors:
     - sourceCluster: "my-cluster-a"
       targetCluster: "my-cluster-b"
@@ -43,9 +63,9 @@ spec:
           refresh.groups.interval.seconds: 600
       topicsPattern: ".*"
       groupsPattern: ".*"
-  metricsConfig:
-    type: jmxPrometheusExporter
-    valueFrom:
-      configMapKeyRef:
-        name: mirror-maker-2-metrics
-        key: connect-metrics-config.yml
+  # metricsConfig:
+  #   type: jmxPrometheusExporter
+  #   valueFrom:
+  #     configMapKeyRef:
+  #       name: mirror-maker-2-metrics
+  #       key: connect-metrics-config.yml

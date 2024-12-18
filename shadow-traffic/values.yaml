@@ -3,54 +3,140 @@ image:
   repository: shadowtraffic/shadowtraffic
   tag: latest
   pullPolicy: IfNotPresent
-global: 
-  secretName: my-secrets
+global:
+  secretName: shadowtraffic-secrets
 
-globalConfigs: 
+globalConfigs:
+
+schedule:
+  stages:
+    - generators:
+        - beneficiaries
+    - generators:
+        - sensors
+    
 
 generators:
-  - name: generator1
+  - name: beneficiaries
     connection: pg
-    table: "testTable"
+    table: beneficiaries
+    vars:
+      firstname:
+        _gen: string
+        expr: "#{Name.firstName}"
+      lastname:
+        _gen: string
+        expr: "#{Name.lastName}"
     row:
-      testColumn:
-        _gen: "oneOf"
-        choices: ["👍", "🔥", "👑"]
+      beneficiaryId:
+        _gen: sequentialInteger
+        startingFrom: 1
+      firstName:
+        _gen: string
+        expr: "#{firstname}"
+      lastName:
+        _gen: string
+        expr: "#{lastname}"
+      fullName:
+        _gen: string
+        expr: "#{firstname} #{lastname}"
+    localConfigs:
+      throttleMs: 100
+      maxEvents: 100
 
-  - name: generator3
-    connection: azure
-    container: "sandbox"
-    containerConfigs:
-      keyPrefix: "foo-"
-      format: "jsonl"
-    data:
-      a:
-        _gen: "uuid"
-      b:
-        _gen: "boolean"
+  - name: sensors
+    connection: kafka
+    topic: test.beneficiaries.viewers
+    key:
+      beneficiaryid:
+        _gen: lookup
+        connection: pg
+        table: beneficiaries
+        path:
+          - row
+          - beneficiaryId
+    value:
+      sensorId:
+        _gen: sequentialString
+        _startingFrom: 1
+        _expr: "sen-~d"
+      timestamp:
+        _gen: formatDateTime
+        ms:
+          _gen: now
+        format: yyyy-MM-dd'T'HH:mm:ss
+  
+      latitude:
+        _gen: string
+        expr: "#{Address.latitude}"
+        cast: double
+      longitude:
+        _gen: string
+        expr: "#{Address.longitude}"
+        cast: double
+      soilMoisturePercentage:
+        _gen: uniformDistribution
+        bounds:
+          - 0
+          - 100
+        decimals: 3
+      soilTemperature:
+        _gen: uniformDistribution
+        bounds:
+          - -25
+          - 60
+        decimals: 0
     localConfigs:
       throttleMs: 200
+      maxEvents: 100
+      kafkaValueAvroSchemaHint:
+        type: record
+        name: SensorData
+        fields:
+          - name: sensorId
+            type: string
+          - name: timestamp
+            type: string
+          - name: latitude
+            type: double
+          - name: longitude
+            type: double
+          - name: soilMoisturePercentage
+            type: double
+          - name: soilTemperature
+            type: int
 
 connections:
   pg:
-    kind: "postgres"
+    kind: postgres
     connectionConfigs:
-      host: "localhost"
+      host: database-postgresql
       port: 5432
-      db: "mydb"
-      username: "postgres"
-      password: postgresPassword
-        
-  azure:
-    kind: "azureBlobStorage"
-    connectionConfigs:
-      connectionString: azureString
+      db: development
+      username: ${POSTGRES_USER}
+      password: ${POSTGRES_PASSWORD}
+    tablePolicy: dropAndCreate
 
-
+  kafka:
+    kind: kafka
+    producerConfigs:
+      bootstrap.servers: my-cluster-a-kafka-bootstrap:9096
+      schema.registry.url: http://confluent-schema-registry:8081
+      key.serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      value.serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      sasl.jaas.config: org.apache.kafka.common.security.scram.ScramLoginModule required username="my-scram-user" password="${SCRAM_PASSWORD}";
+      sasl.mechanism: SCRAM-SHA-512
+      security.protocol: SASL_SSL
+      ssl.keystore.location: /opt/store/keystore.jks
+      ssl.truststore.location: /opt/store/truststore.jks
+      ssl.truststore.password: ${TRUSTSTORE_PASSWORD}
+      ssl.keystore.password: ${KEYSTORE_PASSWORD}
+  
 envs:
   - name: postgresPassword
     secretKeyRef:
-      key: POSTGRESPASSWORD
+      name: postgres-secrets
+      key: POSTGRES_PASSWORD
   - name: azureString
     secretKeyRef:
       key: AZURESTRING
@@ -73,13 +159,21 @@ envs:
     secretKeyRef:
       key: LICENSE_SIGNATURE
 
+volumeMounts:
+  - name: registry-store
+    mountPath: /opt/store
+
+volumes:
+  - name: registry-store
+    secret:
+      secretName: confluent-schema-registry-jks
 
 cliSwitches:
 
-  configFile: ""
-  stdout: true
+  configFile: 
+  stdout: false
   noPretty: false
-  sample: 
+  sample: false
   watch: true
   quiet: false
   seed: false

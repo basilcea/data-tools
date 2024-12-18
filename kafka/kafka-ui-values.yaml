@@ -2,98 +2,138 @@ yamlApplicationConfig:
   kafka:
     clusters:
       - name: local
-        bootstrapServers: my-cluster-a-kafka-bootstrap:9093
+        bootstrapServers: my-cluster-a-kafka-bootstrap:9096
         properties:
-          security:
-            protocol: 'SSL'
-        ssl:
-          truststoreLocation:
-          truststorePassword:
+          sasl.mechanism: SCRAM-SHA-512
+          security.protocol: SASL_SSL
+          sasl.jaas.config: org.apache.kafka.common.security.scram.ScramLoginModule required username="my-scram-user" password="${SCRAM_PASSWORD}";
+          # ssl.endpoint.identification.algorithm: ""
+          ssl.truststore.location: /opt/sslstore/clustertruststore.jks
+          ssl.truststore.password: ${CLUSTERTRUSTSTORE_PASSWORD}
 
-        schemaRegistry: ''
+          # sasl.oauthbearer.token.endpoint.url: http://keycloak/realms/kafka-authz/protocol/openid-connect/token
 
+        schemaRegistry: http://confluent-schema-registry:8081
         schemaRegistrySSL:
-          keystoreLocation:
-          keystorePassword:
-
-        metrics:
-          type: PROMETHEUS
-          port: 9404
-          keystoreLocation:
-          keystorePassword:
+          keystoreLocation: /opt/store/keystore.jks
+          keystorePassword: ${KEYSTORE_PASSWORD}
+        truststoreLocation: /opt/store/truststore.jks
+        truststorePassword: ${TRUSTSTORE_PASSWORD}
 
         kafkaConnect:
-          - name:
-            address:
-            keystoreLocation:
-            keystorePassword:
+          - name: my-connect-cluster-pool-a
+            address: http://my-connect-cluster-pool-a-connect:8083
+            keystoreLocation: /opt/sslstore/clusterstore.jks
+            keystorePassword: ${CLUSTERTRUSTSTORE_PASSWORD}
+          - name: my-connect-cluster-pool-b
+            address: http://my-connect-cluster-pool-b-connect:8083
+            keystoreLocation: /opt/sslstore/clusterstore.jks
+            keystorePassword: ${CLUSTERTRUSTSTORE_PASSWORD}
+      
+        # metrics:
+        #   type: PROMETHEUS
+        #   port: 9404
+        #   keystoreLocation:
+        #   keystorePassword:
 
   auth:
-    type: OAUTH2
-    oauth2:
-      client:
-        keycloak:
-          clientId: xxx
-          clientSecret: yyy
-          scope: openid
-          issuer-uri: https://<keycloak_instance>/auth/realms/<realm>
-          user-name-attribute: preferred_username
-          client-name: keycloak
-          provider: keycloak
-          custom-params:
-            type: oauth
-  rbac:
-    roles:
-      - name: "dataeng"
-        clusters:
-          - local
-        subjects:
-          - provider: oauth
-            type: user
-            value: "memelord.lol"
-          - provider: oauth
-            type: role
-            value: "kek@memelord.lol"
-        permissions:
-          - resource: applicationconfig
-            # value not applicable for applicationconfig
-            actions: ["view", "edit"] # can be with or without quotes
-          - resource: clusterconfig
-            # value not applicable for clusterconfig
-            actions: ["view", "edit"]
-          - resource: topic
-            value: "ololo.*"
-            actions: # can be a multiline list
-              - VIEW # can be upper or lowercase
-              - CREATE
-              - EDIT
-              - DELETE
-              - MESSAGES_READ
-              - MESSAGES_PRODUCE
-              - MESSAGES_DELETE
+    type: LOGIN_FORM
+  spring:
+    security:
+      user:
+        name: my-scram-user
+        password: ${SCRAM_PASSWORD}
+  # auth:
+  #   type: OAUTH
+  #   oauth2:
+  #     client:
+  #       keycloak:
+  #         clientId: kafka-ui
+  #         clientSecret: ${KAFKA_UI_CLIENT_SECRET}
+  #         scope: openid profile
+  #         issuer-uri: http://keycloak/realms/kafka-authz
+  #         token-uri: http://keycloak/realms/kafka-authz/protocol/openid-connect/token
+  #         jwks-uri: http://keycloak/realms/kafka-authz/protocol/openid-connect/certs
+  #         user-name-attribute: preferred_username
+  #         client-name: keycloak
+  #         provider: keycloak
+  #         custom-params:
+  #           type: keycloak
+  #           roles-field: client-roles
+  #           groups-field: groups
+  #           ssl.truststore.location: /opt/sslstore/keycloaktruststore.jks
+  #           ssl.truststore.password: ${KEYCLOAKTRUSTSTORE_PASSWORD}
+  #           ssl.keystore.password: ${KEYCLOAKSTORE_PASSWORD}
+  #           ssl.keystore.location: /opt/sslstore/keycloakstore.jks
+  #           logout-uri: http://keycloak/realms/kafka-authz/protocol/openid-connect/logout
 
-          - resource: consumer
-            value: "\_confluent-ksql.*"
-            actions: [VIEW, DELETE, RESET_OFFSETS]
-
-          - resource: schema
-            value: "blah.*"
-            actions: [VIEW, CREATE, DELETE, EDIT, MODIFY_GLOBAL_COMPATIBILITY]
-
-          - resource: connect
-            value: "local"
-            actions: [view, edit, create, restart]
-          # connectors selector not implemented yet, use connects
-          #      selector:
-          #        connector:
-          #          name: ".*"
-          #          class: 'com.provectus.connectorName'
-
-          - resource: acl
-            # value not applicable for acl
-            actions: [view, edit]
+  # rbac:
+  #   roles:
+  #     - name: "admin"
+  #       clusters:
+  #         - local
+  #       subjects:
+  #         - provider: oauth
+  #           type: role
+  #           value: client-roles
+  #       permissions:
+  #         - resource: applicationconfig
+  #           # value not applicable for applicationconfig
+  #           actions: ["view", "edit"] # can be with or without quotes
+  #         - resource: clusterconfig
+  #           # value not applicable for clusterconfig
+  #           actions: ["view", "edit"]
+  #         - resource: topic
+  #           value: ".*"
+  #           actions:
+  #             - view
+  #             - create
+  #             - edit
+  #             - delete
+  #             - messages_read
+  #             - messages_produce
+  #             - messages_delete
+  #         - resource: schema
+  #           value: ".*"
+  #           actions:
+  #             - view
+  #             - create
+  #             - delete
+  #             - edit
+  #             - modify_global_compatibility
+  #         - resource: consumer
+  #           value: ".*"
+  #           actions:
+  #             - view
+  #             - delete
+  #             - reset_offsets
+  #         - resource: connect
+  #           value: ".*"
+  #           actions:
+  #             - view
+  #             - edit
+  #             - create
+  #             - restart
+  #         - resource: acl
+  #           # value not applicable for acl
+  #           actions:
+  #             - view
+  #             - edit
 
   management:
     health:
       ldap:
         enabled: false
+volumeMounts:
+  - name: registry-store
+    mountPath: /opt/store
+  - name: kafka-store
+    mountPath: /opt/sslstore
+
+volumes:
+  - name: registry-store
+    secret:
+      secretName: confluent-schema-registry-jks
+  - name: kafka-store
+    secret:
+      secretName: store

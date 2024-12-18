@@ -8,10 +8,15 @@ command -v envsubst >/dev/null 2>&1 || { echo >&2 "envsubst is required but it's
 
 # Source the .env file from the root directory
 if [[ -f "${ROOT_DIR}/.env" ]]; then
-  export $(grep -v '^#' "${ROOT_DIR}/.env" | xargs)
+  while IFS= read -r line || [ -n "$line" ]; do
+    # Ignore comments and empty lines
+    if [[ ! "$line" =~ ^# && ! -z "$line" ]]; then
+      export "$line"
+    fi
+  done < "${ROOT_DIR}/.env"
 else
   echo ".env file not found in the root directory. Aborting."
-  exit 1
+  exit 1;
 fi
 
 # Function to process a single YAML file

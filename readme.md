@@ -33,11 +33,12 @@
 
 ## Generating Self Signed TLS for Development Purposes
 
-````
-openssl genrsa -out tls.key 2048
+```openssl genrsa -out tls.key 2048
 openssl req -new -key tls.key -out request.csr
 openssl x509 -req -days 365 -in request.csr -signkey tls.key -out tls.crt
 rm request.csr
 kubectl create secret tls my-tls-secret --cert=/path/to/cert.crt --key=/path/to/key.key
-
 ```
+
+# Processing Yaml Files
+The project include a process-yaml-files.sh command that fills up secrets from .env file into the respective places. This should only be used in development purposes.
