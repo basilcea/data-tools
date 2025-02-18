@@ -1,0 +1,31 @@
+image:
+  repository: mrcea/ceaflinkoperator
+  pullPolicy: IfNotPresent
+  tag: v1.0.2
+operatorVolumeMounts:
+  create: true
+  data:
+    - name: tls-cert-store
+      mountPath: /opt/flink/tls-cert
+      readOnly: false
+    - name: flink-artifacts
+      mountPath: /opt/flink/artifacts
+      readOnly: false
+operatorVolumes:
+  create: true
+  data:
+    - name: tls-cert-store
+      secret:
+        secretName: flink-tls-secret
+
+    - name: flink-artifacts
+      persistentVolumeClaim:
+        claimName: flink-artifacts
+      
+podSecurityContext:
+  runAsGroup: 9999
+  runAsUser: 9999
+
+operatorSecurityContext:
+  runAsGroup: 9999
+  runAsUser: 9999

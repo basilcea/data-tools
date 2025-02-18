@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spark-config
+data:
+  spark-defaults.conf: |
+    spark.kubernetes.file.upload.path=
+    spark.kubernetes.driverEnv.SPARK_MASTER_URL=spark://localhost:7077
+    # spark.ui.reverseProxy=true
+    # spark.ui.reverseProxyUrl=http://localhost:8015
+    spark.ui.filters=io.okdp.spark.authc.OidcAuthFilter
+    spark.io.okdp.spark.authc.OidcAuthFilter.param.issuer-uri=http://keycloak/realms/kafka-authz
+    spark.io.okdp.spark.authc.OidcAuthFilter.param.client-secret=${SPARK_CLIENT_SECRET}
+    spark.io.okdp.spark.authc.OidcAuthFilter.param.client-id=spark
+    spark.io.okdp.spark.authc.OidcAuthFilter.param.cookie-is-secure=false
+    spark.io.okdp.spark.authc.OidcAuthFilter.param.redirect-uri=http://localhost:8015
+    spark.io.okdp.spark.authc.OidcAuthFilter.param.scope=openid+profile+email+roles+offline_access+group
+    spark.io.okdp.spark.authc.OidcAuthFilter.param.cookie-max-age-minutes=500
+    spark.io.okdp.spark.authc.OidcAuthFilter.param.cookie-cipher-secret-key=${COOKIE_KEY}
+    spark.io.okdp.spark.authc.OidcAuthFilter.param.user-id=email
+    spark.user.groups.mapping=io.okdp.spark.authz.OidcGroupMappingServiceProvider
+    spark.acls.enable=true
+    spark.admin.acls.groups=SparkManager
+    spark.ui.view.acls.groups=analyst
+    spark.history.ui.acls.enable=true
+    spark.history.ui.admin.acls.groups=SparkManager

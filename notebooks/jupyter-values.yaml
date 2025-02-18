@@ -1,0 +1,65 @@
+hub:
+  adminUser: JupyterUser
+  password: JupyterPass123
+
+  configuration: |
+    hub:
+      config:
+        Authenticator:
+          enable_auth_state: true
+          admin_access: true
+        GenericOAuthenticator:
+          client_id: jupyter
+          client_secret: ${JUPYTER_CLIENT_SECRET}
+          oauth_callback_url: http://my-notebooks-jupyterhub-proxy-public:8081/hub/oauth_callback
+          authorize_url: http://keycloak:8080/realms/kafka-authz/protocol/openid-connect/auth
+          token_url: http://keycloak:8080/realms/kafka-authz/protocol/openid-connect/token
+          userdata_url: http://keycloak:8080/realms/kafka-authz/protocol/openid-connect/userinfo
+          logout_redirect_url: http://keycloak:8080/realms/kafka-authz/protocol/openid-connect/logout?redirect_uri=http://jupyter.awshost.io/
+          login_service: keycloak
+          enable_auth_state: true
+          username_claim: preferred_username
+          auth_refresh_age: 86400 # 1 day
+          auth_state_groups_key: group
+          allow_all: true
+          userdata_params:
+            state: state
+          validate_server_cert: false #set to true when using https
+          admin_groups: JupyterAdmins
+          userdata_from_id_token: false #set to true for https
+          manage_groups: true
+          scope:
+            - group
+            - openid
+            - email
+            - profile
+        JupyterHub:
+          authenticator_class: generic-oauth
+          admin_acess: true
+      db:
+        type: postgres
+        upgrade: true
+        url: postgresql://{{ .Values.externalDatabase.user }}@{{.Values.externalDatabase.host }}:{{.Values.externalDatabase.port}}/{{.Values.externalDatabase.database}}
+        password:
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: NOTEBOOK_USER_DB_PASSWORD
+  containerSecurityContext:
+    runAsGroup: 0
+
+
+
+postgresql:
+  enabled: false
+ingress:
+  enabled: true
+  tls: true
+  selfSigned: true
+externalDatabase:
+  port: 5432
+  host: database-postgresql
+  user: ${NOTEBOOK_USER}
+  database: ${NOTEBOOK_DB}
+  existingSecret: postgres-secrets
+  existingSecretPasswordKey: NOTEBOOK_USER_DB_PASSWORD

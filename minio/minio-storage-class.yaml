@@ -1,0 +1,36 @@
+# apiVersion: storage.k8s.io/v1
+# kind: StorageClass
+# metadata:
+#   name: minio-replicated
+# provisioner: io.openebs.csi-mayastor
+# parameters:
+#    protocol: nvmf
+#    repl: "1"
+#    allowVolumeExpansion: true
+# volumeBindingMode: Immediate
+
+# ---
+# The configuration above is for production instance
+
+
+# apiVersion: storage.k8s.io/v1
+# kind: StorageClass
+# metadata:
+#   name: minio-local
+#   annotations:
+#     openebs.io/cas-type: local
+#     cas.openebs.io/config: |
+#       - name: StorageType
+#         value: hostpath
+# provisioner: openebs.io/local
+# reclaimPolicy: Delete
+# volumeBindingMode: Immediate
+
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: hostpath-storage
+provisioner: docker.io/hostpath
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer

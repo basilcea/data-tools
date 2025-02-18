@@ -1,0 +1,15 @@
+apiVersion: flink.apache.org/v1beta1
+kind: FlinkSessionJob
+metadata:
+  namespace: bi
+  name: pyflink-session-job
+spec:
+
+  deploymentName: pyflink-session
+  job:
+    jarURI: file:///opt/flink/lib/flink-python-1.17.2.jar  # Note, this jarURI is actually a placeholder
+    entryClass: "org.apache.flink.client.python.PythonDriver"
+    args: ["-py", "/opt/flink/pyfiles/main.py" , "-pyfs", "/opt/flink/pyfiles/"]
+    parallelism: 1
+    state: running
+    upgradeMode: savepoint

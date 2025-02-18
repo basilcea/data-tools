@@ -1,0 +1,47 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaUser
+metadata:
+  name: my-scram-user
+  labels:
+    strimzi.io/cluster: my-cluster-a
+spec:
+  authentication:
+    type: scram-sha-512
+    password:
+      valueFrom:
+        secretKeyRef:
+          name: kafka-user-secrets
+          key: USER_PASSWORD
+  authorization:
+    type: simple
+    acls:
+      # Example ACL rules for consuming from my-topic using consumer group my-group
+      - resource:
+          type: topic
+          name: "*"
+          patternType: literal
+        operations:
+          - Describe
+          - DescribeConfigs
+          - Read
+          - Create
+          - Write
+          - Delete
+        host: "*"
+      - resource:
+          type: group
+          name: "*"
+          patternType: literal
+        operations:
+          - Read
+        host: "*"
+      - resource:
+          type: cluster
+        operations:
+          - Read
+          - Describe
+          - DescribeConfigs
+        host: "*"
+
+      # Example ACL rules for producing to topic my-topic
+      

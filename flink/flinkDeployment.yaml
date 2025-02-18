@@ -1,0 +1,84 @@
+apiVersion: flink.apache.org/v1beta1
+kind: FlinkDeployment
+metadata:
+  namespace: bi
+  name: pyflink-session
+spec:
+  image: mrcea/ceaflink:v1.0.1
+  flinkVersion: v1_17
+  ingress:
+    template: "/{{namespace}}/{{name}}(/|$)(.*)"
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: "/$2"
+  flinkConfiguration:
+    taskmanager.numberOfTaskSlots: "2"
+    state.savepoints.dir: file:///flink-data/savepoints
+    state.checkpoints.dir: file:///flink-data/checkpoints
+    high-availability.type: kubernetes
+    high-availability.storageDir: file:///flink-data/ha
+    kubernetes.artifacts.local-upload-enabled: 'true'
+    kubernetes.operator.periodic.savepoint.interval: '6h'
+    kubernetes.operator.savepoint.history.max.age: '24h'
+    kubernetes.operator.savepoint.history.max.count: '5'
+    web.upload.dir: '/opt/flink/lib'
+    # security.ssl.internal.enabled: 'true'
+    # security.ssl.internal.keystore: /opt/flink/tls-cert/internal.keystore
+    # security.ssl.internal.keystore-password: ${FLINK_SSL_PASSWORD}
+    # security.ssl.internal.truststore: /opt/flink/tls-cert/internal.keystore
+    # security.ssl.internal.key-password: ${FLINK_SSL_PASSWORD}
+    # security.ssl.internal.truststore-password: ${FLINK_SSL_PASSWORD}
+    # security.ssl.rest.keystore: /opt/flink/tls-cert/rest.keystore
+    # security.ssl.rest.truststore: /opt/flink/tls-cert/rest.truststore
+    # security.ssl.rest.key-password: ${FLINK_SSL_PASSWORD}
+    # security.ssl.rest.truststore-password: ${FLINK_SSL_PASSWORD}
+    # security.ssl.rest.enabled: 'true'
+    # security.ssl.rest.keystore-password: ${FLINK_SSL_PASSWORD}
+  serviceAccount: flink
+  jobManager:
+    resource:
+      memory: "2048m"
+      cpu: 1
+  taskManager:
+    resource:
+      memory: "2048m"
+      cpu: 1
+  podTemplate:
+    metadata:
+      namespace: bi
+    spec:
+      securityContext:
+        runAsUser: 9999
+        runAsGroup: 9999
+      containers:
+        - name: flink-main-container
+          volumeMounts:
+            - mountPath: /flink-data
+              name: flink-ha-volume
+              readOnly: false
+            - mountPath: /opt/flink/pyfiles
+              name: pyfiles
+            - name: tls-cert-store
+              mountPath: /opt/flink/tls-cert
+              readOnly: false
+        - name: fluentbit
+          image: fluent/fluent-bit:1.9.6-debug
+          command: ['sh', '-c', '/fluent-bit/bin/fluent-bit -i tail -p path=/flink-logs/*.log -p multiline.parser=java -o stdout']
+          volumeMounts:
+            - mountPath: /flink-logs
+              name: flink-logs
+          
+      volumes:
+        - name: flink-logs
+          emptyDir: {}
+        - name: pyfiles
+          configMap:
+            name: pyfiles
+        - name: flink-ha-volume
+          persistentVolumeClaim:
+            claimName: flink-pvc
+        - name: tls-cert-store
+          secret:
+            secretName: flink-tls-secret
+            
+  restartNonce: 1

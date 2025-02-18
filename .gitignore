@@ -99,7 +99,6 @@ ENV/
 
 # Ignore files for Conda
 conda-requirements.txt
-*.yaml
 
 # Ignore MacOS files
 .DS_Store

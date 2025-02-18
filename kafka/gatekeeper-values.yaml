@@ -1,0 +1,18 @@
+config:
+  client-secret: ${KAFKA_UI_CLIENT_SECRET}
+  discovery-url: ${DISCOVERY_URL}
+  secure-cookie: false
+  client-id: kafka-ui
+  upstream-url: http://localhost:9097/login
+  encryption-key: ${ENCRYPTION_KEY}
+  redirection-url: http://localhost:9097
+  enable-refresh-tokens: true
+  server-read-timeout: 360s
+  server-write-timeout: 360s
+  upstream-timeout: 360s
+  upstream-response-header-timeout: 360s
+  enable-default-deny: false
+  cors-origins:
+    - "*"
+  resources:
+    - uri: /*
