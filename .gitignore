@@ -116,3 +116,4 @@ desktop.ini
 *.env.yaml
 *.env.yml
 .yamllint.yml
+.env
