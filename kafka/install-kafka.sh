@@ -38,6 +38,7 @@ echo "Creating Scram User"
 kubectl apply -f kafka-scram-user.env.yaml -n bi
 
 echo "Installing schema registry"
+
 helm upgrade --install -n bi --values schema-registry-values.env.yaml my-cluster-registry-operator lsstsqre/strimzi-registry-operator
 
 echo "Creating Schema Registry Connection"
@@ -140,8 +141,8 @@ rm -f cluster.p12
 rm -f clusterstore.jks
 rm -f clustertruststore.jks
 
-echo "Installing ui gatekeeper"
-helm upgrade --install -n bi --values gatekeeper-values.env.yaml my-cluster-gogatekeeper gogatekeeper/gatekeeper
+# echo "Installing ui gatekeeper"
+# helm upgrade --install -n bi --values gatekeeper-values.env.yaml my-cluster-gogatekeeper gogatekeeper/gatekeeper
 
 echo "Installing kafka ui"
 helm upgrade --install -n bi --values kafka-ui-values.env.yaml my-cluster-kafka-ui kafka-ui/kafka-ui

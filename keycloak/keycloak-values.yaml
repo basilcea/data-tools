@@ -21,4 +21,11 @@ resources:
   requests:
     cpu: 100m
     memory: 256Mi
+# ingress:
+#   enabled: true
+#   ingressClassName: nginx
+#   hostname: keycloak.local
+#   tls: true
+#   selfSigned: true
+
 production: false

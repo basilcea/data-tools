@@ -14,8 +14,4 @@ fi
 
 # helm repo update
 
-echo "127.0.0.1 my-notebooks-jupyterhub-hub" | sudo tee -a /etc/hosts
-echo "127.0.0.1 my-notebooks-jupyterhub-proxy-public" | sudo tee -a /etc/hosts
-echo "127.0.0.1 keycloak" | sudo tee -a /etc/hosts
-
 helm upgrade --install my-notebooks bitnami/jupyterhub -f jupyter-values.env.yaml -n bi
